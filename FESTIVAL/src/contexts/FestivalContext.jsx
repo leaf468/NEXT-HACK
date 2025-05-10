@@ -15,8 +15,7 @@ export const FestivalProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [filters, setFilters] = useState({
-        startDate: null,
-        endDate: null,
+        date: { startDate: "", endDate: "" },
         school: "",
         artist: "",
         region: "",
@@ -48,16 +47,15 @@ export const FestivalProvider = ({ children }) => {
             let results = [...festivals];
 
             // 날짜 필터
-            if (filters.startDate && filters.endDate) {
+            if (filters.date && (filters.date.startDate || filters.date.endDate)) {
                 results = await searchFestivalsByDate(
-                    filters.startDate,
-                    filters.endDate,
+                    filters.date,
                     results
                 );
-            } else if (filters.startDate === "") {
+            } else if (filters.date && filters.date.startDate === "" && filters.date.endDate === "") {
                 // 날짜 필터가 비워졌을 때 (빈 문자열로 설정됨)
                 // 필터를 초기화하여 빈 칸이 됐을 때 필터가 제거되는 효과
-                updateFilters({ startDate: null, endDate: null });
+                updateFilters({ date: { startDate: "", endDate: "" } });
             }
 
             // 학교 필터 - 빈 문자열인 경우도 적절히 처리
@@ -122,8 +120,7 @@ export const FestivalProvider = ({ children }) => {
     // 필터 초기화
     const clearFilters = () => {
         setFilters({
-            startDate: null,
-            endDate: null,
+            date: { startDate: "", endDate: "" },
             school: "",
             artist: "",
             region: "",

@@ -57,13 +57,13 @@ const HomePage = () => {
     };
 
     // 날짜 필터 핸들러
-    const handleDateFilter = (startDate, endDate) => {
-        updateFilters({ startDate, endDate });
-        if (startDate && endDate) {
+    const handleDateFilter = (dateRange) => {
+        updateFilters({ date: dateRange });
+        if (dateRange.startDate && dateRange.endDate) {
             displayNotification(
                 "날짜 필터",
-                `${formatDate(startDate)} ~ ${formatDate(
-                    endDate
+                `${formatDate(dateRange.startDate)} ~ ${formatDate(
+                    dateRange.endDate
                 )} 기간의 축제를 필터링합니다.`,
                 "info"
             );
@@ -172,8 +172,7 @@ const HomePage = () => {
                     onArtistFilter={handleArtistFilter}
                     onRegionFilter={handleRegionFilter}
                     onClearFilters={handleClearFilters}
-                    startDate={filters.startDate}
-                    endDate={filters.endDate}
+                    date={filters.date}
                     school={filters.school}
                     artist={filters.artist}
                     region={filters.region}
@@ -210,15 +209,14 @@ const HomePage = () => {
                             </button>
                         </div>
                     )}
-                    {filters.startDate && filters.endDate && (
+                    {filters.date && filters.date.startDate && filters.date.endDate && (
                         <div className="filter-tag">
-                            날짜: {formatDate(filters.startDate)} ~{" "}
-                            {formatDate(filters.endDate)}
+                            날짜: {formatDate(filters.date.startDate)} ~{" "}
+                            {formatDate(filters.date.endDate)}
                             <button
                                 onClick={() =>
                                     updateFilters({
-                                        startDate: null,
-                                        endDate: null,
+                                        date: { startDate: "", endDate: "" },
                                     })
                                 }
                             >

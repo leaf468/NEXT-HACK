@@ -140,18 +140,29 @@ export const searchFestivalsByDate = async (
   }
 
   try {
-    // 단일 날짜 문자열인 경우 (이전 버전 호환)
-    let filterDate = dateFilter;
-    if (typeof dateFilter === 'object' && (dateFilter.startDate || dateFilter.endDate)) {
-      // 시작 날짜와 종료 날짜 중 하나만 있는 경우에는 단일 날짜 검색
+    // 모든 케이스를 단일 날짜 문자열로 변환 (서버 호출용)
+    let filterDate;
+
+    // dateFilter가 객체인 경우 처리
+    if (typeof dateFilter === 'object') {
+      // 시작 날짜와 종료 날짜 중 하나만 있는 경우
       if (dateFilter.startDate && !dateFilter.endDate) {
         filterDate = dateFilter.startDate;
       } else if (!dateFilter.startDate && dateFilter.endDate) {
         filterDate = dateFilter.endDate;
-      } else {
-        // 시작일과 종료일이 모두 있는 경우, 시작일로 검색 (그리고 후처리)
+      } else if (dateFilter.startDate && dateFilter.endDate) {
+        // 시작일과 종료일이 모두 있는 경우, 시작일로 검색 (후처리로 정확하게 필터링)
         filterDate = dateFilter.startDate;
+      } else {
+        // 모든 필드가 비어있는 경우
+        return festivals || [];
       }
+    } else if (typeof dateFilter === 'string') {
+      // 단일 날짜 문자열인 경우 (이전 버전 호환)
+      filterDate = dateFilter;
+    } else {
+      // 다른 모든 경우 (null, undefined 등)
+      return festivals || [];
     }
 
     // Firestore에서 날짜로 검색 (단일 날짜 기준으로)

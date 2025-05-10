@@ -4,6 +4,8 @@ import { isDateInRange } from "./dateUtils";
 export const filterFestivals = (festivals, filters) => {
     if (!festivals || !festivals.length) return [];
 
+    console.log("Filtering festivals with filters:", filters);
+
     return festivals.filter((festival) => {
         // 학교 필터
         if (filters.school) {
@@ -25,13 +27,13 @@ export const filterFestivals = (festivals, filters) => {
 
         // 날짜 필터
         if (
-            filters.startDate &&
-            filters.endDate &&
+            filters.date &&
+            ((filters.date.startDate && filters.date.endDate) ||
+            (typeof filters.date === 'string' && filters.date)) &&
             !isDateInRange(
                 festival.startDate,
                 festival.endDate,
-                filters.startDate,
-                filters.endDate
+                filters.date
             )
         ) {
             return false;

@@ -89,13 +89,23 @@ export const isDateInRange = (
     festivalEnd,
     filterDate
 ) => {
-    // 필터가 없는 경우 모든 축제 포함
+    // 축제 날짜가 없는 경우 모든 필터링에서 제외
     if (!festivalStart || !festivalEnd) return true;
 
-    // 필터 데이터가 없거나 시작/종료 날짜 둘 다 없는 경우 모든 축제 포함
-    if (!filterDate || (!filterDate.startDate && !filterDate.endDate)) return true;
+    // 필터 데이터가 없는 경우 모든 축제 포함
+    if (!filterDate) return true;
+
+    // 필터 날짜가 빈 객체이거나 시작/종료 날짜 둘 다 없는 경우 모든 축제 포함
+    if (
+        (typeof filterDate === 'object' && Object.keys(filterDate).length === 0) ||
+        (filterDate.startDate === "" && filterDate.endDate === "")
+    ) {
+        return true;
+    }
 
     try {
+        console.log("isDateInRange checking with filterDate:", filterDate);
+
         // 타임스탬프 객체인 경우 Date로 변환
         let fStart;
         if (typeof festivalStart === "string") {
@@ -206,7 +216,7 @@ export const isDateInRange = (
 
         return isInRange;
     } catch (error) {
-        console.error("날짜 범위 확인 오류:", error);
+        console.error("날짜 범위 확인 오류:", error, { filterDate, festivalStart, festivalEnd });
         return true; // 오류 발생 시 기본적으로 표시
     }
 };
