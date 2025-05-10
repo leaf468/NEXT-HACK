@@ -15,6 +15,7 @@ import FavoritesPage from "./pages/FavoritesPage";
 import CalendarPage from "./pages/CalendarPage";
 import AuthPage from "./pages/AuthPage";
 import "./styles/global.css";
+import "./styles/components/comments.css";
 import "font-awesome/css/font-awesome.min.css";
 
 // Main app content component (separating from providers)

@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import {
     FaHeart,
     FaRegHeart,
@@ -7,16 +7,38 @@ import {
     FaClock,
     FaShare,
     FaMusic,
+    FaComments
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { UserContext } from "../../contexts/UserContext";
 import { NotificationContext } from "../../contexts/NotificationContext";
 import { formatDate, formatDateTime } from "../../utils/dateUtils";
+import CommentList from "./CommentList";
+import CommentForm from "./CommentForm";
 
 const FestivalDetail = ({ festival }) => {
     const { isFavorite, addToFavorites, removeFromFavorites } =
         useContext(UserContext);
     const { displayNotification } = useContext(NotificationContext);
+    const [commentRefreshKey, setCommentRefreshKey] = useState(0);
+
+    const handleCommentAdded = () => {
+        setCommentRefreshKey(prevKey => prevKey + 1);
+        displayNotification(
+            "댓글 등록",
+            "댓글이 성공적으로 등록되었습니다.",
+            "success"
+        );
+    };
+
+    const handleCommentDeleted = () => {
+        setCommentRefreshKey(prevKey => prevKey + 1);
+        displayNotification(
+            "댓글 삭제",
+            "댓글이 성공적으로 삭제되었습니다.",
+            "info"
+        );
+    };
 
     // 대학 이름을 가져오는 함수 (universityName 또는 school 필드 사용)
     const getUniversityName = () => {
@@ -130,11 +152,13 @@ const FestivalDetail = ({ festival }) => {
 
                 <div className="festival-image-container">
                     {festival.imageUrl || festival.image ? (
-                        <img
-                            src={festival.imageUrl || festival.image}
-                            alt={`${getUniversityName()} ${festival.name} 포스터`}
-                            className="festival-detail-image"
-                        />
+                        <div className="festival-image-wrapper">
+                            <img
+                                src={festival.imageUrl || festival.image}
+                                alt={`${getUniversityName()} ${festival.name} 포스터`}
+                                className="festival-detail-image"
+                            />
+                        </div>
                     ) : (
                         <div className="festival-detail-placeholder">
                             <span>{getUniversityName().charAt(0)}</span>
@@ -185,17 +209,19 @@ const FestivalDetail = ({ festival }) => {
                     <div className="artists-grid">
                         {festival.artists.map((artist, index) => (
                             <div key={index} className="artist-item">
-                                {artist.imageUrl || artist.image ? (
-                                    <img
-                                        src={artist.imageUrl || artist.image}
-                                        alt={artist.name}
-                                        className="artist-image"
-                                    />
-                                ) : (
-                                    <div className="artist-placeholder">
-                                        <span>{artist.name.charAt(0)}</span>
-                                    </div>
-                                )}
+                                <div className="artist-image-container">
+                                    {artist.imageUrl || artist.image ? (
+                                        <img
+                                            src={artist.imageUrl || artist.image}
+                                            alt={artist.name}
+                                            className="artist-image"
+                                        />
+                                    ) : (
+                                        <div className="artist-placeholder">
+                                            <span>{artist.name.charAt(0)}</span>
+                                        </div>
+                                    )}
+                                </div>
                                 <h3 className="artist-name">{artist.name}</h3>
                                 {(artist.time || artist.performanceDate) && (
                                     <p className="artist-time">{artist.time || artist.performanceDate}</p>
@@ -233,6 +259,24 @@ const FestivalDetail = ({ festival }) => {
                     )}
                 </div>
             )}
+
+            {/* 카더라 게시판 섹션 */}
+            <div className="festival-detail-section kadera-section">
+                <h2 className="section-title">
+                    <FaComments className="icon" />
+                    카더라 게시판
+                </h2>
+                <CommentForm
+                    festivalId={festival.id}
+                    onCommentAdded={handleCommentAdded}
+                />
+                <CommentList
+                    key={commentRefreshKey}
+                    festivalId={festival.id}
+                    refreshKey={commentRefreshKey}
+                    onCommentDeleted={handleCommentDeleted}
+                />
+            </div>
 
             <div className="back-link-container">
                 <Link to="/" className="back-link">
