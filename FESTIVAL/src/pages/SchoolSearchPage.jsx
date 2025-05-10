@@ -3,20 +3,110 @@ import { FestivalContext } from "../contexts/FestivalContext";
 import { NotificationContext } from "../contexts/NotificationContext";
 import SearchBar from "../components/common/SearchBar";
 import FestivalList from "../components/festival/FestivalList";
-import schools from "../data/schools";
+import { getAllUniversities } from "../lib/firebase";
 
 const SchoolSearchPage = () => {
-    const { updateFilters, clearFilters, filteredFestivals, loading, error } =
+    const { updateFilters, clearFilters, filteredFestivals, festivals, loading, error } =
         useContext(FestivalContext);
     const { displayNotification } = useContext(NotificationContext);
 
     const [searchTerm, setSearchTerm] = useState("");
-    const [filteredSchools, setFilteredSchools] = useState(schools);
+    const [schools, setSchools] = useState([]);
+    const [filteredSchools, setFilteredSchools] = useState([]);
     const [selectedSchool, setSelectedSchool] = useState(null);
+    const [loadingSchools, setLoadingSchools] = useState(true);
+
+    // 데이터베이스에서 학교 목록 가져오기
+    useEffect(() => {
+        const fetchSchools = async () => {
+            try {
+                setLoadingSchools(true);
+
+                // 우선 DB에서 모든 학교 정보 가져오기 시도
+                const dbSchools = await getAllUniversities();
+
+                if (dbSchools && dbSchools.length > 0) {
+                    // DB에서 가져온 학교 정보를 화면에 맞게 변환
+                    const formattedSchools = dbSchools.map(school => ({
+                        id: school.id,
+                        name: school.name,
+                        shortName: school.shortName || school.name.replace('대학교', '대').replace('학교', ''),
+                        location: {
+                            address: school.address || '',
+                            region: school.location || '지역 정보 없음',
+                            coordinates: school.coordinates || { latitude: 0, longitude: 0 }
+                        },
+                        website: school.website || ''
+                    }));
+
+                    setSchools(formattedSchools);
+                    setFilteredSchools(formattedSchools);
+                } else {
+                    // DB에 학교 데이터가 없는 경우, 축제 데이터에서 학교 정보 추출
+                    const festivalSchools = new Map();
+
+                    festivals.forEach(festival => {
+                        const schoolName = festival.universityName || festival.university?.name || festival.school || '';
+                        if (schoolName && !festivalSchools.has(schoolName)) {
+                            const shortName = schoolName.replace('대학교', '대').replace('학교', '');
+                            const region = festival.university?.location || festival.location?.region || '';
+
+                            festivalSchools.set(schoolName, {
+                                id: festival.university?.id || `school-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                                name: schoolName,
+                                shortName: shortName,
+                                location: {
+                                    address: festival.university?.address || festival.location?.address || '',
+                                    region: region || '지역 정보 없음',
+                                    coordinates: festival.location?.coordinates || { latitude: 0, longitude: 0 }
+                                }
+                            });
+                        }
+                    });
+
+                    const extractedSchools = Array.from(festivalSchools.values());
+                    setSchools(extractedSchools);
+                    setFilteredSchools(extractedSchools);
+                }
+            } catch (error) {
+                console.error("학교 데이터를 가져오는데 실패했습니다:", error);
+
+                // 축제 데이터에서 학교 정보 추출 (백업 메커니즘)
+                const uniqueSchools = new Map();
+
+                festivals.forEach(festival => {
+                    const schoolName = festival.universityName || festival.university?.name || festival.school || '';
+                    if (schoolName && !uniqueSchools.has(schoolName)) {
+                        const shortName = schoolName.replace('대학교', '대').replace('학교', '');
+                        const region = festival.university?.location || festival.location?.region || '';
+
+                        uniqueSchools.set(schoolName, {
+                            id: festival.university?.id || `school-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                            name: schoolName,
+                            shortName: shortName,
+                            location: {
+                                address: festival.university?.address || festival.location?.address || '',
+                                region: region || '지역 정보 없음',
+                                coordinates: festival.location?.coordinates || { latitude: 0, longitude: 0 }
+                            }
+                        });
+                    }
+                });
+
+                const extractedSchools = Array.from(uniqueSchools.values());
+                setSchools(extractedSchools);
+                setFilteredSchools(extractedSchools);
+            } finally {
+                setLoadingSchools(false);
+            }
+        };
+
+        fetchSchools();
+    }, [festivals]);
 
     // 검색어에 따라 학교 필터링
     useEffect(() => {
-        if (!searchTerm) {
+        if (!searchTerm || schools.length === 0) {
             setFilteredSchools(schools);
             return;
         }
@@ -24,13 +114,13 @@ const SchoolSearchPage = () => {
         const filtered = schools.filter(
             (school) =>
                 school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                school.shortName
+                (school.shortName && school.shortName
                     .toLowerCase()
-                    .includes(searchTerm.toLowerCase())
+                    .includes(searchTerm.toLowerCase()))
         );
 
         setFilteredSchools(filtered);
-    }, [searchTerm]);
+    }, [searchTerm, schools]);
 
     // 학교 검색 핸들러
     const handleSearch = (query) => {
@@ -90,26 +180,34 @@ const SchoolSearchPage = () => {
                     <i className="fa fa-university" style={{ color: 'var(--primary-color)' }}></i>
                     학교 목록
                 </h2>
-                <div className="school-grid">
-                    {filteredSchools.map((school) => (
-                        <div
-                            key={school.id}
-                            className="school-card"
-                            onClick={() => handleSchoolSelect(school.name)}
-                        >
-                            <div className="school-logo">
-                                <span>{school.shortName.charAt(0)}</span>
+                {loadingSchools ? (
+                    <div className="loading-spinner">학교 정보를 불러오는 중...</div>
+                ) : filteredSchools.length > 0 ? (
+                    <div className="school-grid">
+                        {filteredSchools.map((school) => (
+                            <div
+                                key={school.id}
+                                className="school-card"
+                                onClick={() => handleSchoolSelect(school.name)}
+                            >
+                                <div className="school-logo">
+                                    <span>{school.shortName?.charAt(0) || school.name.charAt(0)}</span>
+                                </div>
+                                <div className="school-info">
+                                    <h3>{school.name}</h3>
+                                    <p>
+                                        <i className="fa fa-map-marker" style={{ marginRight: '5px', color: '#666' }}></i>
+                                        {school.location?.region || '지역 정보 없음'}
+                                    </p>
+                                </div>
                             </div>
-                            <div className="school-info">
-                                <h3>{school.name}</h3>
-                                <p>
-                                    <i className="fa fa-map-marker" style={{ marginRight: '5px', color: '#666' }}></i>
-                                    {school.location.region}
-                                </p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="no-schools">
+                        <p>표시할 학교 정보가 없습니다.</p>
+                    </div>
+                )}
             </section>
 
             <section id="festivals-section" className="festivals-section">

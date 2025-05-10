@@ -54,30 +54,50 @@ export const FestivalProvider = ({ children }) => {
                     filters.endDate,
                     results
                 );
+            } else if (filters.startDate === "") {
+                // 날짜 필터가 비워졌을 때 (빈 문자열로 설정됨)
+                // 필터를 초기화하여 빈 칸이 됐을 때 필터가 제거되는 효과
+                updateFilters({ startDate: null, endDate: null });
             }
 
-            // 학교 필터
-            if (filters.school) {
-                results = await searchFestivalsBySchool(
-                    filters.school,
-                    results
-                );
+            // 학교 필터 - 빈 문자열인 경우도 적절히 처리
+            if (filters.school !== null && filters.school !== undefined) {
+                if (filters.school === "") {
+                    // 학교 필터가 비워졌을 때 (빈 문자열로 설정됨)
+                    // 모든 축제를 보여주기
+                    results = [...festivals];
+                } else {
+                    results = await searchFestivalsBySchool(
+                        filters.school,
+                        results
+                    );
+                }
             }
 
-            // 아티스트 필터
-            if (filters.artist) {
-                results = await searchFestivalsByArtist(
-                    filters.artist,
-                    results
-                );
+            // 아티스트 필터 - 빈 문자열인 경우도 적절히 처리
+            if (filters.artist !== null && filters.artist !== undefined) {
+                if (filters.artist === "") {
+                    // 아티스트 필터가 비워졌을 때 (빈 문자열로 설정됨)
+                    // 이미 적용된 다른 필터가 있을 수 있으므로 results는 변경하지 않음
+                } else {
+                    results = await searchFestivalsByArtist(
+                        filters.artist,
+                        results
+                    );
+                }
             }
 
-            // 지역 필터
-            if (filters.region) {
-                results = await searchFestivalsByRegion(
-                    filters.region,
-                    results
-                );
+            // 지역 필터 - 빈 문자열인 경우도 적절히 처리
+            if (filters.region !== null && filters.region !== undefined) {
+                if (filters.region === "") {
+                    // 지역 필터가 비워졌을 때 (빈 문자열로 설정됨)
+                    // 이미 적용된 다른 필터가 있을 수 있으므로 results는 변경하지 않음
+                } else {
+                    results = await searchFestivalsByRegion(
+                        filters.region,
+                        results
+                    );
+                }
             }
 
             setFilteredFestivals(results);

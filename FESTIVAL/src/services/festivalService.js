@@ -131,9 +131,44 @@ export const searchFestivalsByDate = async (
 ) => {
   // 이미 전체 데이터가 있는 경우 로컬에서 필터링
   if (festivals) {
-    return festivals.filter((festival) =>
-      festival.date === date
-    );
+    return festivals.filter((festival) => {
+      // festival.startDate와 festival.endDate가 있는 경우 해당 날짜가 범위 내인지 확인
+      if (festival.startDate && festival.endDate) {
+        // 날짜 문자열을 Date 객체로 변환
+        const searchDate = new Date(date);
+
+        let startDate, endDate;
+
+        // timestamp 객체인 경우
+        if (festival.startDate && typeof festival.startDate.toDate === 'function') {
+          startDate = festival.startDate.toDate();
+        } else if (typeof festival.startDate === 'string') {
+          startDate = new Date(festival.startDate);
+        } else {
+          startDate = festival.startDate;
+        }
+
+        if (festival.endDate && typeof festival.endDate.toDate === 'function') {
+          endDate = festival.endDate.toDate();
+        } else if (typeof festival.endDate === 'string') {
+          endDate = new Date(festival.endDate);
+        } else {
+          endDate = festival.endDate;
+        }
+
+        // 날짜 비교를 위해 시간 정보 제거
+        searchDate.setHours(0, 0, 0, 0);
+        const startWithoutTime = new Date(startDate);
+        startWithoutTime.setHours(0, 0, 0, 0);
+        const endWithoutTime = new Date(endDate);
+        endWithoutTime.setHours(0, 0, 0, 0);
+
+        return searchDate >= startWithoutTime && searchDate <= endWithoutTime;
+      }
+
+      // 예전 방식 지원 (date 필드가 있는 경우)
+      return festival.date === date;
+    });
   }
 
   try {
@@ -149,7 +184,7 @@ export const searchFestivalsByDate = async (
         artists: festival.artists || []
       })
     );
-    
+
     return filteredFestivals;
   } catch (error) {
     console.error("날짜별 축제 검색에 실패했습니다:", error);

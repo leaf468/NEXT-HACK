@@ -1,17 +1,33 @@
 import { format, isWithinInterval, parseISO } from "date-fns";
 import { ko } from "date-fns/locale";
 
-// 날짜 포맷팅 (YYYY-MM-DD -> YYYY년 MM월 DD일)
-export const formatDate = (dateString) => {
-    if (!dateString) return "";
+// 날짜 포맷팅 (Timestamp 또는 YYYY-MM-DD -> YYYY년 MM월 DD일)
+export const formatDate = (dateValue) => {
+    if (!dateValue) return "";
 
     try {
-        const date =
-            typeof dateString === "string" ? parseISO(dateString) : dateString;
+        let date;
+        // 타임스탬프 객체인 경우 (Firestore Timestamp가 toDate 메서드를 가짐)
+        if (dateValue && typeof dateValue.toDate === 'function') {
+            date = dateValue.toDate();
+        }
+        // Date 객체인 경우
+        else if (dateValue instanceof Date) {
+            date = dateValue;
+        }
+        // 문자열인 경우
+        else if (typeof dateValue === "string") {
+            date = parseISO(dateValue);
+        }
+        // 그 외의 경우
+        else {
+            date = dateValue;
+        }
+
         return format(date, "yyyy년 MM월 dd일", { locale: ko });
     } catch (error) {
-        console.error("날짜 포맷팅 오류:", error);
-        return dateString;
+        console.error("날짜 포맷팅 오류:", error, dateValue);
+        return String(dateValue);
     }
 };
 
@@ -64,14 +80,25 @@ export const isDateInRange = (
         return true;
 
     try {
-        const fStart =
-            typeof festivalStart === "string"
-                ? parseISO(festivalStart)
-                : festivalStart;
-        const fEnd =
-            typeof festivalEnd === "string"
-                ? parseISO(festivalEnd)
-                : festivalEnd;
+        // 타임스탬프 객체인 경우 Date로 변환
+        let fStart;
+        if (typeof festivalStart === "string") {
+            fStart = parseISO(festivalStart);
+        } else if (festivalStart && typeof festivalStart.toDate === 'function') {
+            fStart = festivalStart.toDate();
+        } else {
+            fStart = festivalStart;
+        }
+
+        let fEnd;
+        if (typeof festivalEnd === "string") {
+            fEnd = parseISO(festivalEnd);
+        } else if (festivalEnd && typeof festivalEnd.toDate === 'function') {
+            fEnd = festivalEnd.toDate();
+        } else {
+            fEnd = festivalEnd;
+        }
+
         const start =
             typeof filterStart === "string"
                 ? parseISO(filterStart)
@@ -101,8 +128,20 @@ export const getDaysRemaining = (targetDate) => {
     if (!targetDate) return null;
 
     try {
-        const target =
-            typeof targetDate === "string" ? parseISO(targetDate) : targetDate;
+        let target;
+        // 타임스탬프 객체인 경우 (Firestore Timestamp가 toDate 메서드를 가짐)
+        if (targetDate && typeof targetDate.toDate === 'function') {
+            target = targetDate.toDate();
+        }
+        // 문자열인 경우
+        else if (typeof targetDate === "string") {
+            target = parseISO(targetDate);
+        }
+        // Date 객체인 경우
+        else {
+            target = targetDate;
+        }
+
         const today = new Date();
         today.setHours(0, 0, 0, 0); // 오늘 날짜의 자정으로 설정
 
@@ -111,7 +150,7 @@ export const getDaysRemaining = (targetDate) => {
 
         return diffDays;
     } catch (error) {
-        console.error("남은 일수 계산 오류:", error);
+        console.error("남은 일수 계산 오류:", error, targetDate);
         return null;
     }
 };
@@ -122,9 +161,34 @@ export const getFestivalStatus = (startDate, endDate) => {
         return { status: "unknown", label: "정보 없음" };
 
     try {
-        const start =
-            typeof startDate === "string" ? parseISO(startDate) : startDate;
-        const end = typeof endDate === "string" ? parseISO(endDate) : endDate;
+        let start;
+        // 타임스탬프 객체인 경우 (Firestore Timestamp가 toDate 메서드를 가짐)
+        if (startDate && typeof startDate.toDate === 'function') {
+            start = startDate.toDate();
+        }
+        // 문자열인 경우
+        else if (typeof startDate === "string") {
+            start = parseISO(startDate);
+        }
+        // Date 객체인 경우
+        else {
+            start = startDate;
+        }
+
+        let end;
+        // 타임스탬프 객체인 경우 (Firestore Timestamp가 toDate 메서드를 가짐)
+        if (endDate && typeof endDate.toDate === 'function') {
+            end = endDate.toDate();
+        }
+        // 문자열인 경우
+        else if (typeof endDate === "string") {
+            end = parseISO(endDate);
+        }
+        // Date 객체인 경우
+        else {
+            end = endDate;
+        }
+
         const today = new Date();
 
         if (today < start) {
@@ -145,7 +209,7 @@ export const getFestivalStatus = (startDate, endDate) => {
             };
         }
     } catch (error) {
-        console.error("축제 상태 확인 오류:", error);
+        console.error("축제 상태 확인 오류:", error, startDate, endDate);
         return { status: "unknown", label: "정보 없음" };
     }
 };

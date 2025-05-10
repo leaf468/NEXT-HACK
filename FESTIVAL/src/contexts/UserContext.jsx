@@ -76,11 +76,27 @@ export const UserProvider = ({ children }) => {
             return;
         }
 
-        // 로그인한 사용자의 즐겨찾기
-        const userFavoritesKey = `favorites_${user.id}`;
-        const updatedFavorites = [...favorites, festivalId];
-        localStorage.setItem(userFavoritesKey, JSON.stringify(updatedFavorites));
-        setFavorites(updatedFavorites);
+        try {
+            // Firebase에 즐겨찾기 추가
+            await addFavorite(user.id, festivalId);
+
+            // 로컬 상태 및 스토리지 업데이트
+            const userFavoritesKey = `favorites_${user.id}`;
+            const updatedFavorites = [...favorites, festivalId];
+            localStorage.setItem(userFavoritesKey, JSON.stringify(updatedFavorites));
+            setFavorites(updatedFavorites);
+
+            // 사용자 정보에 favorites 업데이트하여 localStorage에 저장
+            const updatedUser = { ...user };
+            if (!updatedUser.faves) updatedUser.faves = [];
+            if (!updatedUser.faves.includes(festivalId)) {
+                updatedUser.faves.push(festivalId);
+                localStorage.setItem("festivalUser", JSON.stringify(updatedUser));
+                setUser(updatedUser);
+            }
+        } catch (error) {
+            console.error("즐겨찾기 추가 중 오류 발생:", error);
+        }
     };
 
     // 축제를 즐겨찾기에서 제거
@@ -95,11 +111,26 @@ export const UserProvider = ({ children }) => {
             return;
         }
 
-        // 로그인한 사용자의 즐겨찾기 제거
-        const userFavoritesKey = `favorites_${user.id}`;
-        const updatedFavorites = favorites.filter((id) => id !== festivalId);
-        localStorage.setItem(userFavoritesKey, JSON.stringify(updatedFavorites));
-        setFavorites(updatedFavorites);
+        try {
+            // Firebase에서 즐겨찾기 제거
+            await removeFavorite(user.id, festivalId);
+
+            // 로컬 상태 및 스토리지 업데이트
+            const userFavoritesKey = `favorites_${user.id}`;
+            const updatedFavorites = favorites.filter((id) => id !== festivalId);
+            localStorage.setItem(userFavoritesKey, JSON.stringify(updatedFavorites));
+            setFavorites(updatedFavorites);
+
+            // 사용자 정보에 favorites 업데이트하여 localStorage에 저장
+            const updatedUser = { ...user };
+            if (updatedUser.faves) {
+                updatedUser.faves = updatedUser.faves.filter(id => id !== festivalId);
+                localStorage.setItem("festivalUser", JSON.stringify(updatedUser));
+                setUser(updatedUser);
+            }
+        } catch (error) {
+            console.error("즐겨찾기 제거 중 오류 발생:", error);
+        }
     };
 
     // 즐겨찾기 여부 확인

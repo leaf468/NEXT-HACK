@@ -41,35 +41,46 @@ const Filter = ({
 
     const handleApplyFilters = () => {
         // 날짜 필터 적용 (단일 날짜로 변경)
-        if (localDate && onDateFilter) {
+        if (onDateFilter) {
+            // 날짜 필드가 비어있더라도 필터 적용
+            // 이렇게 하면 필터 내용이 비워졌을 때 해당 필터 제거 가능
             onDateFilter(localDate);
         }
 
         // 학교 필터 적용
-        if (localSchool && onSchoolFilter) {
+        if (onSchoolFilter) {
+            // 학교 필드가 비어있더라도 필터 적용
             onSchoolFilter(localSchool);
         }
 
         // 아티스트 필터 적용
-        if (localArtist && onArtistFilter) {
+        if (onArtistFilter) {
+            // 아티스트 필드가 비어있더라도 필터 적용
             onArtistFilter(localArtist);
         }
 
         // 지역 필터 적용
-        if (localRegion && onRegionFilter) {
+        if (onRegionFilter) {
+            // 지역 필드가 비어있더라도 필터 적용
             onRegionFilter(localRegion);
         }
 
-        // 필터 적용 후 필터 접기 (선택적)
-        // setIsExpanded(false);
+        // 필터 적용 후 필터 접기
+        setIsExpanded(false);
     };
 
     const handleClearFilters = () => {
+        // 로컬 필터 상태 초기화
         setLocalDate("");
         setLocalSchool("");
         setLocalArtist("");
         setLocalRegion("");
+
+        // 전역 필터 초기화 함수 호출
         onClearFilters();
+
+        // 필터가 초기화됐음을 사용자에게 시각적으로 표시하기 위해 닫기
+        setIsExpanded(false);
     };
 
     const toggleExpand = () => {

@@ -4,20 +4,98 @@ import { NotificationContext } from "../contexts/NotificationContext";
 import SearchBar from "../components/common/SearchBar";
 import ArtistList from "../components/artist/ArtistList";
 import FestivalList from "../components/festival/FestivalList";
-import artists from "../data/artists";
+import { getAllArtists } from "../lib/firebase";
 
 const ArtistSearchPage = () => {
-    const { updateFilters, clearFilters, filteredFestivals, loading, error } =
+    const { updateFilters, clearFilters, filteredFestivals, festivals, loading, error } =
         useContext(FestivalContext);
     const { displayNotification } = useContext(NotificationContext);
 
     const [searchTerm, setSearchTerm] = useState("");
-    const [filteredArtists, setFilteredArtists] = useState(artists);
+    const [artists, setArtists] = useState([]);
+    const [filteredArtists, setFilteredArtists] = useState([]);
     const [selectedArtist, setSelectedArtist] = useState(null);
+    const [loadingArtists, setLoadingArtists] = useState(true);
+
+    // 데이터베이스에서 실제 아티스트 목록 가져오기
+    useEffect(() => {
+        const fetchArtists = async () => {
+            try {
+                setLoadingArtists(true);
+
+                // 우선 DB에서 모든 아티스트 가져오기 시도
+                const dbArtists = await getAllArtists();
+
+                if (dbArtists && dbArtists.length > 0) {
+                    setArtists(dbArtists);
+                    setFilteredArtists(dbArtists);
+                } else {
+                    // DB에 아티스트 데이터가 없는 경우, 축제 데이터에서 추출
+                    // festivals 컨텍스트에서 축제 데이터 가져오기
+                    const festivalArtists = new Map();
+
+                    festivals.forEach(festival => {
+                        if (festival.artists && festival.artists.length > 0) {
+                            festival.artists.forEach(artist => {
+                                if (!festivalArtists.has(artist.id || artist.name)) {
+                                    festivalArtists.set(artist.id || artist.name, {
+                                        id: artist.id || `artist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                                        name: artist.name,
+                                        image: artist.image || '',
+                                        genres: artist.genres || [],
+                                        description: artist.description || `${artist.name}은(는) 여러 대학 축제에 출연하는 아티스트입니다.`,
+                                        festivals: [festival.id]
+                                    });
+                                } else {
+                                    // 이미 존재하는 아티스트면 출연 축제 리스트에 추가
+                                    const existingArtist = festivalArtists.get(artist.id || artist.name);
+                                    if (!existingArtist.festivals.includes(festival.id)) {
+                                        existingArtist.festivals.push(festival.id);
+                                    }
+                                }
+                            });
+                        }
+                    });
+
+                    const extractedArtists = Array.from(festivalArtists.values());
+                    setArtists(extractedArtists);
+                    setFilteredArtists(extractedArtists);
+                }
+            } catch (error) {
+                console.error("아티스트 데이터를 가져오는데 실패했습니다:", error);
+                // 축제 데이터에서 아티스트 정보 추출 (백업 메커니즘)
+                const uniqueArtists = new Set();
+                const extractedArtists = [];
+
+                festivals.forEach(festival => {
+                    if (festival.artists && festival.artists.length > 0) {
+                        festival.artists.forEach(artist => {
+                            if (!uniqueArtists.has(artist.name)) {
+                                uniqueArtists.add(artist.name);
+                                extractedArtists.push({
+                                    id: artist.id || `artist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                                    name: artist.name,
+                                    image: artist.image || '',
+                                    description: `${artist.name}은(는) ${festival.universityName || festival.university?.name || '여러 대학'} 축제에 출연하는 아티스트입니다.`,
+                                });
+                            }
+                        });
+                    }
+                });
+
+                setArtists(extractedArtists);
+                setFilteredArtists(extractedArtists);
+            } finally {
+                setLoadingArtists(false);
+            }
+        };
+
+        fetchArtists();
+    }, [festivals]);
 
     // 검색어에 따라 아티스트 필터링
     useEffect(() => {
-        if (!searchTerm) {
+        if (!searchTerm || artists.length === 0) {
             setFilteredArtists(artists);
             return;
         }
@@ -27,7 +105,7 @@ const ArtistSearchPage = () => {
         );
 
         setFilteredArtists(filtered);
-    }, [searchTerm]);
+    }, [searchTerm, artists]);
 
     // 아티스트 검색 핸들러
     const handleSearch = (query) => {
@@ -87,10 +165,18 @@ const ArtistSearchPage = () => {
                     <i className="fa fa-music" style={{ color: 'var(--primary-color)' }}></i>
                     아티스트 목록
                 </h2>
-                <ArtistList
-                    artists={filteredArtists}
-                    onArtistSelect={handleArtistSelect}
-                />
+                {loadingArtists ? (
+                    <div className="loading-spinner">아티스트 정보를 불러오는 중...</div>
+                ) : filteredArtists.length > 0 ? (
+                    <ArtistList
+                        artists={filteredArtists}
+                        onArtistSelect={handleArtistSelect}
+                    />
+                ) : (
+                    <div className="no-artists">
+                        <p>표시할 아티스트 정보가 없습니다.</p>
+                    </div>
+                )}
             </section>
 
             <section id="festivals-section" className="festivals-section">

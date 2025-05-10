@@ -112,17 +112,57 @@ export const getFestivalById = async (festivalId) => {
 export const getFestivalsByDate = async (date) => {
   try {
     const festivalsRef = collection(db, "festivals");
-    const q = query(festivalsRef, where("date", "==", date));
-    const festivalSnapshot = await getDocs(q);
-    
+    // 타임스탬프로 검색하기 위해 날짜 시작과 끝을 계산
+    const searchDate = new Date(date);
+    const startOfDay = new Date(searchDate);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(searchDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // startDate <= endOfDay && endDate >= startOfDay 조건으로 날짜 범위 내 축제 검색
+    // 참고: 이 방식은 Firebase의 where 조건이 복잡한 날짜 범위 쿼리를 효과적으로 지원하지 않아
+    // 모든 축제를 가져온 후 클라이언트에서 필터링합니다.
+    const festivalSnapshot = await getDocs(festivalsRef);
+
     const festivals = [];
     for (const festivalDoc of festivalSnapshot.docs) {
       const festivalData = festivalDoc.data();
-      
+
+      // 날짜 범위 내에 있는지 확인 (타임스탬프 필드 기준)
+      // 만약 타임스탬프로 저장되어 있지 않으면 원래 방식도 유지
+      let isInDateRange = false;
+
+      // 타임스탬프 방식 확인
+      if (festivalData.startDate && festivalData.endDate) {
+        const festivalStartDate = festivalData.startDate.toDate ?
+                                festivalData.startDate.toDate() :
+                                new Date(festivalData.startDate);
+        const festivalEndDate = festivalData.endDate.toDate ?
+                              festivalData.endDate.toDate() :
+                              new Date(festivalData.endDate);
+
+        // 날짜 비교를 위해 시간 정보 제거
+        const startWithoutTime = new Date(festivalStartDate);
+        startWithoutTime.setHours(0, 0, 0, 0);
+        const endWithoutTime = new Date(festivalEndDate);
+        endWithoutTime.setHours(23, 59, 59, 999);
+
+        // 검색 날짜가 축제 기간 내에 있는지 확인
+        isInDateRange = searchDate >= startWithoutTime && searchDate <= endWithoutTime;
+      }
+      // 예전 방식 지원 (date 필드가 있는 경우)
+      else if (festivalData.date === date) {
+        isInDateRange = true;
+      }
+
+      if (!isInDateRange) {
+        continue; // 날짜 범위에 없으면 건너뜀
+      }
+
       // Get university data
       const universityRef = doc(db, "universities", festivalData.university_id);
       const universitySnap = await getDoc(universityRef);
-      
+
       // Get artists data
       const artistsData = [];
       for (const artistId of festivalData.artist_ids) {
@@ -132,7 +172,7 @@ export const getFestivalsByDate = async (date) => {
           artistsData.push({ id: artistId, ...artistSnap.data() });
         }
       }
-      
+
       festivals.push({
         id: festivalDoc.id,
         ...festivalData,
@@ -140,7 +180,7 @@ export const getFestivalsByDate = async (date) => {
         artists: artistsData
       });
     }
-    
+
     return festivals;
   } catch (error) {
     console.error("Error getting festivals by date:", error);
@@ -155,20 +195,24 @@ export const loginUser = async (username) => {
     const usersRef = collection(db, "users");
     const q = query(usersRef, where("name", "==", username));
     const userSnapshot = await getDocs(q);
-    
+
     // If user exists, return user data
     if (!userSnapshot.empty) {
       const userData = userSnapshot.docs[0].data();
       return { id: userSnapshot.docs[0].id, ...userData };
     }
-    
+
     // Create new user if not exists
     const newUserData = {
       name: username,
-      faves: []
+      faves: []  // 새 사용자는 빈 즐겨찾기 배열로 초기화
     };
-    
-    const newUserRef = await addDoc(collection(db, "users"), newUserData);
+
+    // 실제로 Firestore에 사용자 데이터 저장
+    const userCollectionRef = collection(db, "users");
+    const newUserRef = await addDoc(userCollectionRef, newUserData);
+    console.log("New user created with ID: ", newUserRef.id);
+
     return { id: newUserRef.id, ...newUserData };
   } catch (error) {
     console.error("Error logging in user:", error);

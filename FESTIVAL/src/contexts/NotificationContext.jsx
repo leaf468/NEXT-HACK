@@ -90,9 +90,12 @@ export const NotificationProvider = ({ children }) => {
                         (f) => f.id === update.festivalId
                     );
                     if (festival) {
+                        const schoolName = festival.universityName || festival.university?.name || festival.school || '대학교';
+                        const festivalName = festival.name || '축제';
+
                         displayNotification(
-                            "축제 정보 업데이트",
-                            `${festival.school} ${festival.name}의 ${update.field}이(가) 업데이트 되었습니다.`,
+                            "관심 축제 정보 업데이트",
+                            `${schoolName} ${festivalName}의 ${update.field}이(가) 업데이트 되었습니다.`,
                             "info"
                         );
                     }
@@ -102,8 +105,10 @@ export const NotificationProvider = ({ children }) => {
             }
         };
 
-        // 처음 로드 시와 5분마다 업데이트 체크
+        // 처음 로드 시에만 업데이트 체크 - 이후에는 사용자 작업에 따라 발생
         checkForUpdates();
+
+        // 5분마다 체크하는 간격 설정 (개발 중에는 시간을 짧게 설정하여 테스트)
         const intervalId = setInterval(checkForUpdates, 5 * 60 * 1000);
 
         return () => clearInterval(intervalId);

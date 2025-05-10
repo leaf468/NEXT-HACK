@@ -192,12 +192,16 @@ export const markAllNotificationsAsRead = async (userId) => {
 // 실시간 알림 구독 (Firebase 사용)
 export const subscribeToNotifications = (userId, callback) => {
   if (USE_MOCK_DATA) {
-    // 모의 알림 생성 (5-10초마다 랜덤 알림)
+    // 모의 알림 생성 (더 낮은 빈도로)
     const interval = setInterval(() => {
-      // 80% 확률로 알림 생성 안함
-      if (Math.random() < 0.8) return;
+      // 95% 확률로 알림 생성 안함 (알림 빈도 줄임)
+      if (Math.random() < 0.95) return;
 
-      const types = ["festival_update", "new_artist", "lineup_change"];
+      // 주로 즐겨찾기 업데이트 알림만 생성
+      const types = [
+        "favorite_update", "favorite_update", "favorite_update", // 75% 확률로 즐겨찾기 알림
+        "festival_update" // 25% 확률로 일반 축제 알림
+      ];
       const randomType = types[Math.floor(Math.random() * types.length)];
 
       const notification = {
@@ -220,7 +224,7 @@ export const subscribeToNotifications = (userId, callback) => {
         "notifications",
         JSON.stringify(notifications)
       );
-    }, Math.random() * 5000 + 5000); // 5-10초마다
+    }, Math.random() * 30000 + 30000); // 30-60초마다 (빈도 낮춤)
 
     return () => clearInterval(interval);
   }
@@ -307,11 +311,13 @@ export const createNotification = async (userId, notificationData) => {
 const getNotificationTitle = (type) => {
   switch (type) {
     case "festival_update":
-      return "축제 정보 업데이트";
+      return "관심 축제 정보 업데이트";
     case "new_artist":
       return "새로운 아티스트 추가";
     case "lineup_change":
       return "라인업 변경 알림";
+    case "favorite_update":
+      return "즐겨찾기 축제 업데이트";
     default:
       return "새로운 알림";
   }
@@ -328,19 +334,23 @@ const getNotificationMessage = (type) => {
   ];
   const festivals = ["대동제", "축제", "청춘 페스티벌", "봄 축제"];
   const artists = ["아이유", "뉴진스", "세븐틴", "악뮤", "싸이"];
+  const updateTypes = ["일정", "장소", "라인업", "티켓 정보"];
 
   const randomSchool = schools[Math.floor(Math.random() * schools.length)];
-  const randomFestival =
-    festivals[Math.floor(Math.random() * festivals.length)];
+  const randomFestival = festivals[Math.floor(Math.random() * festivals.length)];
   const randomArtist = artists[Math.floor(Math.random() * artists.length)];
+  const randomUpdateType = updateTypes[Math.floor(Math.random() * updateTypes.length)];
 
   switch (type) {
     case "festival_update":
-      return `${randomSchool} ${randomFestival}의 일정이 업데이트되었습니다.`;
+      return `${randomSchool} ${randomFestival}의 정보가 업데이트되었습니다.`;
     case "new_artist":
       return `${randomSchool} ${randomFestival}에 ${randomArtist}(이)가 새롭게 추가되었습니다.`;
     case "lineup_change":
       return `${randomSchool} ${randomFestival}의 라인업이 변경되었습니다.`;
+    case "favorite_update":
+      // 즐겨찾기한 축제 업데이트 메시지
+      return `즐겨찾기한 축제 "${randomSchool} ${randomFestival}"의 ${randomUpdateType}이(가) 업데이트되었습니다.`;
     default:
       return "축제 정보가 업데이트되었습니다.";
   }
