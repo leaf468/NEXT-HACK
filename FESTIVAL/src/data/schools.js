@@ -13,6 +13,7 @@ const schools = [
             region: "서울",
         },
         website: "https://www.snu.ac.kr",
+        logoPath: "logo/snu_logo.png",
     },
     {
         id: "2",
@@ -27,6 +28,7 @@ const schools = [
             region: "서울",
         },
         website: "https://www.korea.ac.kr",
+        logoPath: "logo/korea_logo.png",
     },
     {
         id: "3",
@@ -41,6 +43,7 @@ const schools = [
             region: "부산",
         },
         website: "https://www.pusan.ac.kr",
+        logoPath: "logo/pusan_logo.png",
     },
     {
         id: "4",
@@ -55,6 +58,7 @@ const schools = [
             region: "서울",
         },
         website: "https://www.yonsei.ac.kr",
+        logoPath: "logo/yonsei_logo.png",
     },
     {
         id: "5",
@@ -69,6 +73,7 @@ const schools = [
             region: "대전",
         },
         website: "https://www.kaist.ac.kr",
+        logoPath: "logo/kaist_logo.png",
     },
     {
         id: "6",
@@ -83,6 +88,7 @@ const schools = [
             region: "서울",
         },
         website: "https://www.hanyang.ac.kr",
+        logoPath: "logo/hanyang_logo.png",
     },
     {
         id: "7",
@@ -97,6 +103,7 @@ const schools = [
             region: "대구",
         },
         website: "https://www.knu.ac.kr",
+        logoPath: "logo/knu_logo.png",
     },
     {
         id: "8",
@@ -111,6 +118,7 @@ const schools = [
             region: "서울",
         },
         website: "https://www.ewha.ac.kr",
+        logoPath: "logo/ewha_logo.png",
     },
     {
         id: "9",
@@ -125,6 +133,7 @@ const schools = [
             region: "서울",
         },
         website: "https://www.sogang.ac.kr",
+        logoPath: "logo/sogang_logo.png",
     },
     {
         id: "10",
@@ -139,6 +148,7 @@ const schools = [
             region: "서울",
         },
         website: "https://www.skku.edu",
+        logoPath: "logo/skku_logo.png",
     },
 ];
 

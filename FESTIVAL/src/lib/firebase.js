@@ -424,8 +424,8 @@ export const getAllUniversities = async () => {
         universities.push({
           id: universityDoc.id,
           ...universityData,
-          // Exclude logo and logoUrl fields
-          logo: undefined,
+          // Preserve logo field from Firebase
+          logo: universityData.logo || undefined,
           logoUrl: undefined
         });
       } catch (docError) {

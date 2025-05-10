@@ -3,7 +3,70 @@ import { FestivalContext } from "../contexts/FestivalContext";
 import { NotificationContext } from "../contexts/NotificationContext";
 import SearchBar from "../components/common/SearchBar";
 import FestivalList from "../components/festival/FestivalList";
-import { getAllUniversities } from "../lib/firebase";
+import { getAllUniversities, getImageUrlWithCacheBusting } from "../lib/firebase";
+
+// School logo component to handle image loading
+const SchoolLogo = ({ school, getImageUrl }) => {
+    const [logoUrl, setLogoUrl] = useState(school.logoUrl || "");
+    const [loading, setLoading] = useState(!school.logoUrl);
+    const [error, setError] = useState(false);
+
+    useEffect(() => {
+        const fetchLogo = async () => {
+            // Check if we have direct logo URL in the school object (might be from Firebase 'logo' field)
+            if (school.logo) {
+                console.log(`Using direct logo URL for ${school.name}: ${school.logo}`);
+                setLogoUrl(school.logo);
+                setLoading(false);
+                return;
+            }
+
+            // Check if we have cached logoUrl
+            if (school.logoUrl) {
+                setLogoUrl(school.logoUrl);
+                return;
+            }
+
+            // Check if we have a logoPath to fetch
+            if (!school.logoPath) return;
+
+            try {
+                setLoading(true);
+                setError(false);
+                const url = await getImageUrl(school.logoPath);
+                console.log(`Fetched logo URL for ${school.name}: ${url}`);
+                setLogoUrl(url);
+            } catch (err) {
+                console.error(`Failed to fetch logo for ${school.name}:`, err);
+                setError(true);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchLogo();
+    }, [school.logoPath, school.logoUrl, school.logo, school.name, getImageUrl]);
+
+    if (loading) {
+        return <div className="logo-loading">로딩 중...</div>;
+    }
+
+    if (error || !logoUrl) {
+        return <span>{school.shortName?.charAt(0) || school.name?.charAt(0) || "?"}</span>;
+    }
+
+    return (
+        <img
+            src={logoUrl}
+            alt={`${school.name} 로고`}
+            onError={(e) => {
+                e.target.onerror = null;
+                console.log(`로고 로딩 실패: ${school.name}`);
+                setError(true);
+            }}
+        />
+    );
+};
 
 const SchoolSearchPage = () => {
     const { updateFilters, clearFilters, filteredFestivals, festivals, loading, error } =
@@ -31,16 +94,32 @@ const SchoolSearchPage = () => {
                 if (dbSchools && dbSchools.length > 0) {
                     console.log("DB에서 학교 데이터 성공적으로 수신");
                     // DB에서 가져온 학교 정보를 화면에 맞게 변환
-                    const formattedSchools = dbSchools.map(school => ({
-                        id: school.id,
-                        name: school.name || '이름 없음',
-                        shortName: school.shortName || (school.name ? school.name.replace('대학교', '대').replace('학교', '') : '이름 없음'),
-                        location: {
-                            address: school.address || '',
-                            region: school.location || '지역 정보 없음',
-                            coordinates: school.coordinates || { latitude: 0, longitude: 0 }
-                        },
-                        website: school.website || ''
+                    const formattedSchools = await Promise.all(dbSchools.map(async school => {
+                        // 로고 URL 가져오기 시도
+                        let logoUrl = '';
+                        if (school.logoPath) {
+                            try {
+                                logoUrl = await getImageUrlWithCacheBusting(school.logoPath);
+                                console.log(`학교 ${school.name} 로고 URL 가져옴: ${logoUrl}`);
+                            } catch (error) {
+                                console.error(`학교 ${school.name} 로고 URL 가져오기 실패:`, error);
+                            }
+                        }
+
+                        return {
+                            id: school.id,
+                            name: school.name || '이름 없음',
+                            shortName: school.shortName || (school.name ? school.name.replace('대학교', '대').replace('학교', '') : '이름 없음'),
+                            location: {
+                                address: school.address || '',
+                                region: school.location || '지역 정보 없음',
+                                coordinates: school.coordinates || { latitude: 0, longitude: 0 }
+                            },
+                            website: school.website || '',
+                            logoPath: school.logoPath || '',  // Preserve the logo path from Firebase
+                            logoUrl: logoUrl,  // Store fetched URL if successful
+                            logo: school.logo || ''  // Add direct logo URL field from Firebase
+                        };
                     }));
 
                     console.log(`학교 데이터 포맷 완료: ${formattedSchools.length}개`);
@@ -221,6 +300,16 @@ const SchoolSearchPage = () => {
                                 className="school-card"
                                 onClick={() => handleSchoolSelect(school.name)}
                             >
+                                <div className="school-logo">
+                                {(school.logoPath || school.logo) ? (
+                                    <SchoolLogo
+                                        school={school}
+                                        getImageUrl={getImageUrlWithCacheBusting}
+                                    />
+                                ) : (
+                                    <span>{school.shortName?.charAt(0) || school.name?.charAt(0) || "?"}</span>
+                                )}
+                            </div>
                                 <div className="school-info">
                                     <h3>{school.name}</h3>
                                     <p>

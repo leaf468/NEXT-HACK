@@ -49,7 +49,7 @@ const Navbar = () => {
         <nav className="navbar">
             <div className="navbar-content">
                 <button className="logo" onClick={() => handleLinkClick("/")}>
-                    <img src="/logo192.png" alt="캠퍼스 페스티벌" className="nav-logo" />
+                    <span className="logo-text">FIESTA</span>
                 </button>
 
                 <button
