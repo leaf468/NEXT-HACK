@@ -1,5 +1,5 @@
 import React, { useContext, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaBell, FaHeart, FaSearch, FaBars, FaTimes, FaUser } from "react-icons/fa";
 import { NotificationContext } from "../../contexts/NotificationContext";
 import { UserContext } from "../../contexts/UserContext";
@@ -7,6 +7,7 @@ import NotificationList from "../user/NotificationList";
 
 const Navbar = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const { getUnreadCount, showNotification, setShowNotification } =
         useContext(NotificationContext);
     const { isLoggedIn, user, setShowLoginPopup, logout } = useContext(UserContext);
@@ -30,19 +31,22 @@ const Navbar = () => {
         setMobileMenuOpen(!mobileMenuOpen);
     };
 
-    // 링크 클릭 시 모바일 메뉴 닫기
-    const handleLinkClick = () => {
+    // 링크 클릭 시 모바일 메뉴 닫기 및 페이지 이동
+    const handleLinkClick = (path) => {
         if (mobileMenuOpen) {
             setMobileMenuOpen(false);
+        }
+        if (path) {
+            navigate(path, { replace: false });
         }
     };
 
     return (
         <nav className="navbar">
             <div className="navbar-content">
-                <Link to="/" className="logo" onClick={handleLinkClick}>
+                <button className="logo" onClick={() => handleLinkClick("/")}>
                     캠퍼스 페스티벌
-                </Link>
+                </button>
 
                 <button
                     className="mobile-menu-toggle"
@@ -53,57 +57,52 @@ const Navbar = () => {
                 </button>
 
                 <div className={`nav-links ${mobileMenuOpen ? 'open' : ''}`}>
-                    <Link
-                        to="/"
+                    <button
                         className={`nav-link ${isActive("/") ? "active" : ""}`}
-                        onClick={handleLinkClick}
+                        onClick={() => handleLinkClick("/")}
                     >
                         홈
-                    </Link>
+                    </button>
 
-                    <Link
-                        to="/search/school"
+                    <button
                         className={`nav-link ${
                             isActive("/search/school") ? "active" : ""
                         }`}
-                        onClick={handleLinkClick}
+                        onClick={() => handleLinkClick("/search/school")}
                     >
                         학교별
-                    </Link>
+                    </button>
 
-                    <Link
-                        to="/search/artist"
+                    <button
                         className={`nav-link ${
                             isActive("/search/artist") ? "active" : ""
                         }`}
-                        onClick={handleLinkClick}
+                        onClick={() => handleLinkClick("/search/artist")}
                     >
                         아티스트별
-                    </Link>
+                    </button>
 
-                    <Link
-                        to="/calendar"
+                    <button
                         className={`nav-link ${
                             isActive("/calendar") ? "active" : ""
                         }`}
-                        onClick={handleLinkClick}
+                        onClick={() => handleLinkClick("/calendar")}
                     >
                         일정
-                    </Link>
+                    </button>
 
-                    <Link
-                        to="/favorites"
+                    <button
                         className={`nav-link ${
                             isActive("/favorites") ? "active" : ""
                         }`}
-                        onClick={handleLinkClick}
+                        onClick={() => handleLinkClick("/favorites")}
                     >
                         <FaHeart style={{ marginRight: "5px" }} />
                         즐겨찾기
-                    </Link>
+                    </button>
 
                     <button
-                        onClick={(e) => {
+                        onClick={() => {
                             toggleNotifications();
                             handleLinkClick();
                         }}
@@ -129,7 +128,7 @@ const Navbar = () => {
                                 onClick={() => {
                                     // 로그아웃 처리
                                     logout();
-                                    handleLinkClick();
+                                    handleLinkClick("/");
                                 }}
                             >
                                 로그아웃

@@ -43,6 +43,12 @@ export const FestivalProvider = ({ children }) => {
     // 필터 적용
     const applyFilters = useCallback(async () => {
         try {
+            // 이전 상태와 동일한 필터인 경우 불필요한 상태 업데이트 방지
+            if (festivals.length === 0) {
+                setFilteredFestivals([]);
+                return;
+            }
+
             setLoading(true);
             let results = [...festivals];
 
@@ -52,10 +58,6 @@ export const FestivalProvider = ({ children }) => {
                     filters.date,
                     results
                 );
-            } else if (filters.date && filters.date.startDate === "" && filters.date.endDate === "") {
-                // 날짜 필터가 비워졌을 때 (빈 문자열로 설정됨)
-                // 필터를 초기화하여 빈 칸이 됐을 때 필터가 제거되는 효과
-                updateFilters({ date: { startDate: "", endDate: "" } });
             }
 
             // 학교 필터 - 빈 문자열인 경우도 적절히 처리

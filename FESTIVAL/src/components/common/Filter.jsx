@@ -24,22 +24,26 @@ const Filter = ({
     const [localRegion, setLocalRegion] = useState(region || "");
     const [isExpanded, setIsExpanded] = useState(false);
 
-    // props 변경시 상태 업데이트
+    // props 변경시 상태 업데이트 - 주의: 불필요한 리렌더링을 막기 위해 deep comparison 추가
     useEffect(() => {
         // 날짜 형식이 문자열에서 객체로 변경되었으므로 변환 필요
         if (date) {
-            if (typeof date === 'string') {
-                setLocalDate({ startDate: date, endDate: date });
-            } else {
-                setLocalDate(date);
+            const newDate = typeof date === 'string'
+                ? { startDate: date, endDate: date }
+                : date;
+
+            // 이전 값과 동일한지 확인하여 불필요한 상태 업데이트 방지
+            if (JSON.stringify(newDate) !== JSON.stringify(localDate)) {
+                setLocalDate(newDate);
             }
-        } else {
+        } else if (localDate.startDate !== "" || localDate.endDate !== "") {
             setLocalDate({ startDate: "", endDate: "" });
         }
-        
-        setLocalSchool(school || "");
-        setLocalArtist(artist || "");
-        setLocalRegion(region || "");
+
+        // 이전 값과 다를 때만 상태 업데이트
+        if (school !== localSchool) setLocalSchool(school || "");
+        if (artist !== localArtist) setLocalArtist(artist || "");
+        if (region !== localRegion) setLocalRegion(region || "");
     }, [date, school, artist, region]);
 
     // 지역 선택 옵션

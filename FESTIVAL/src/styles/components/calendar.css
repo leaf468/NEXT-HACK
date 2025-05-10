@@ -102,6 +102,8 @@
   height: 85px;
   font-size: 1.1rem;
   font-weight: 500;
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .react-calendar__navigation {
@@ -148,6 +150,7 @@
   transform: translateX(-50%);
   width: 100%;
   text-align: center;
+  pointer-events: none;
 }
 
 .event-count {
