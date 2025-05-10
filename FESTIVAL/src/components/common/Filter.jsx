@@ -12,13 +12,16 @@ const Filter = ({
     artist,
     region,
 }) => {
-    // 초기 날짜 상태 설정 (객체 형태로 변경)
+    // 초기 날짜 상태 설정 (객체 형태로 명확히 구성)
     const [localDate, setLocalDate] = useState(() => {
         if (!date) return { startDate: "", endDate: "" };
         if (typeof date === 'string') return { startDate: date, endDate: date };
-        return date; // 이미 객체 형태인 경우
+        return {
+            startDate: date.startDate || "",
+            endDate: date.endDate || ""
+        };
     });
-    
+
     const [localSchool, setLocalSchool] = useState(school || "");
     const [localArtist, setLocalArtist] = useState(artist || "");
     const [localRegion, setLocalRegion] = useState(region || "");
@@ -28,12 +31,19 @@ const Filter = ({
     useEffect(() => {
         // 날짜 형식이 문자열에서 객체로 변경되었으므로 변환 필요
         if (date) {
-            const newDate = typeof date === 'string'
-                ? { startDate: date, endDate: date }
-                : date;
+            let newDate;
+            if (typeof date === 'string') {
+                newDate = { startDate: date, endDate: date };
+            } else {
+                newDate = {
+                    startDate: date.startDate || "",
+                    endDate: date.endDate || ""
+                };
+            }
 
             // 이전 값과 동일한지 확인하여 불필요한 상태 업데이트 방지
             if (JSON.stringify(newDate) !== JSON.stringify(localDate)) {
+                console.log("Updating localDate state:", newDate);
                 setLocalDate(newDate);
             }
         } else if (localDate.startDate !== "" || localDate.endDate !== "") {
@@ -153,10 +163,21 @@ const Filter = ({
                                         id="startDate"
                                         className="filter-input"
                                         value={localDate.startDate || ""}
-                                        onChange={(e) => setLocalDate({
-                                            ...localDate,
-                                            startDate: e.target.value
-                                        })}
+                                        onChange={(e) => {
+                                            const newStartDate = e.target.value;
+                                            // 시작일이 종료일보다 이후인 경우 종료일도 함께 변경
+                                            if (localDate.endDate && newStartDate > localDate.endDate) {
+                                                setLocalDate({
+                                                    startDate: newStartDate,
+                                                    endDate: newStartDate
+                                                });
+                                            } else {
+                                                setLocalDate({
+                                                    ...localDate,
+                                                    startDate: newStartDate
+                                                });
+                                            }
+                                        }}
                                     />
                                 </div>
                             </div>
@@ -175,6 +196,7 @@ const Filter = ({
                                             endDate: e.target.value
                                         })}
                                         min={localDate.startDate || ""}
+                                        disabled={!localDate.startDate} // 시작일이 없으면 종료일 선택 불가
                                     />
                                 </div>
                             </div>

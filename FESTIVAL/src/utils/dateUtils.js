@@ -200,21 +200,19 @@ export const isDateInRange = (
             return true;
         }
 
-        // 축제 기간과 필터 기간이 겹치는지 확인
-        // 다음 조건 중 하나라도 true면 축제를 표시:
-        // 1. 축제가 필터 범위 내에서 시작하거나 종료
-        // 2. 축제가 필터 범위를 완전히 포함
-        // 3. 축제가 필터 범위 안에 완전히 포함됨
-        const isInRange = (
-            // 축제 시작일이 필터 기간 내에 있거나
+        // 축제 날짜 범위와 필터 날짜 범위가 겹치는지 확인 (간소화된 로직)
+        // 다음 조건 중 하나라도 true면 해당 축제는 필터 범위와 겹침:
+        // - 축제 시작일이 필터 범위 내에 있음
+        // - 축제 종료일이 필터 범위 내에 있음
+        // - 축제 기간이 필터 기간을 완전히 포함함
+        return (
+            // 축제 시작일이 필터 기간 내에 있는 경우
             (fStart >= start && fStart <= end) ||
-            // 축제 종료일이 필터 기간 내에 있거나
+            // 축제 종료일이 필터 기간 내에 있는 경우
             (fEnd >= start && fEnd <= end) ||
-            // 축제가 필터 기간을 포함하는 경우 (축제 시작일이 필터 시작일보다 이전이고, 축제 종료일이 필터 종료일보다 이후)
+            // 축제 기간이 필터 기간을 완전히 포함하는 경우
             (fStart <= start && fEnd >= end)
         );
-
-        return isInRange;
     } catch (error) {
         console.error("날짜 범위 확인 오류:", error, { filterDate, festivalStart, festivalEnd });
         return true; // 오류 발생 시 기본적으로 표시

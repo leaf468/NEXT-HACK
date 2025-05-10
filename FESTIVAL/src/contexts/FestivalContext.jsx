@@ -51,53 +51,33 @@ export const FestivalProvider = ({ children }) => {
 
             setLoading(true);
             let results = [...festivals];
+            console.log("Applying filters:", filters);
 
-            // 날짜 필터
+            // 필터 순서 변경: 날짜 필터를 맨 마지막에 적용하도록 변경
+
+            // 학교 필터 적용
+            if (filters.school) {
+                results = await searchFestivalsBySchool(filters.school, results);
+                console.log("After school filter:", results.length);
+            }
+
+            // 아티스트 필터 적용
+            if (filters.artist) {
+                results = await searchFestivalsByArtist(filters.artist, results);
+                console.log("After artist filter:", results.length);
+            }
+
+            // 지역 필터 적용
+            if (filters.region) {
+                results = await searchFestivalsByRegion(filters.region, results);
+                console.log("After region filter:", results.length);
+            }
+
+            // 날짜 필터를 마지막에 적용
             if (filters.date && (filters.date.startDate || filters.date.endDate)) {
-                results = await searchFestivalsByDate(
-                    filters.date,
-                    results
-                );
-            }
-
-            // 학교 필터 - 빈 문자열인 경우도 적절히 처리
-            if (filters.school !== null && filters.school !== undefined) {
-                if (filters.school === "") {
-                    // 학교 필터가 비워졌을 때 (빈 문자열로 설정됨)
-                    // 모든 축제를 보여주기
-                    results = [...festivals];
-                } else {
-                    results = await searchFestivalsBySchool(
-                        filters.school,
-                        results
-                    );
-                }
-            }
-
-            // 아티스트 필터 - 빈 문자열인 경우도 적절히 처리
-            if (filters.artist !== null && filters.artist !== undefined) {
-                if (filters.artist === "") {
-                    // 아티스트 필터가 비워졌을 때 (빈 문자열로 설정됨)
-                    // 이미 적용된 다른 필터가 있을 수 있으므로 results는 변경하지 않음
-                } else {
-                    results = await searchFestivalsByArtist(
-                        filters.artist,
-                        results
-                    );
-                }
-            }
-
-            // 지역 필터 - 빈 문자열인 경우도 적절히 처리
-            if (filters.region !== null && filters.region !== undefined) {
-                if (filters.region === "") {
-                    // 지역 필터가 비워졌을 때 (빈 문자열로 설정됨)
-                    // 이미 적용된 다른 필터가 있을 수 있으므로 results는 변경하지 않음
-                } else {
-                    results = await searchFestivalsByRegion(
-                        filters.region,
-                        results
-                    );
-                }
+                console.log("Applying date filter:", filters.date);
+                results = await searchFestivalsByDate(filters.date, results);
+                console.log("After date filter:", results.length);
             }
 
             setFilteredFestivals(results);
