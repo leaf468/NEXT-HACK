@@ -39,10 +39,7 @@ const AppContent = () => {
                         path="/search/school"
                         element={<SchoolSearchPage />}
                     />
-                    <Route
-                        path="/calendar"
-                        element={<CalendarPage />}
-                    />
+                    <Route path="/calendar" element={<CalendarPage />} />
                     <Route
                         path="/favorites"
                         element={
@@ -51,10 +48,7 @@ const AppContent = () => {
                             </ProtectedRoute>
                         }
                     />
-                    <Route
-                        path="/auth"
-                        element={<AuthPage />}
-                    />
+                    <Route path="/auth" element={<AuthPage />} />
                 </Routes>
             </main>
             <Footer />
