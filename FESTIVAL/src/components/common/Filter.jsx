@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaFilter, FaCalendarAlt, FaUniversity, FaMusic, FaMapMarkerAlt, FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
 
 const Filter = ({
@@ -12,11 +12,35 @@ const Filter = ({
     artist,
     region,
 }) => {
-    const [localDate, setLocalDate] = useState(date || "");
+    // 초기 날짜 상태 설정 (객체 형태로 변경)
+    const [localDate, setLocalDate] = useState(() => {
+        if (!date) return { startDate: "", endDate: "" };
+        if (typeof date === 'string') return { startDate: date, endDate: date };
+        return date; // 이미 객체 형태인 경우
+    });
+    
     const [localSchool, setLocalSchool] = useState(school || "");
     const [localArtist, setLocalArtist] = useState(artist || "");
     const [localRegion, setLocalRegion] = useState(region || "");
     const [isExpanded, setIsExpanded] = useState(false);
+
+    // props 변경시 상태 업데이트
+    useEffect(() => {
+        // 날짜 형식이 문자열에서 객체로 변경되었으므로 변환 필요
+        if (date) {
+            if (typeof date === 'string') {
+                setLocalDate({ startDate: date, endDate: date });
+            } else {
+                setLocalDate(date);
+            }
+        } else {
+            setLocalDate({ startDate: "", endDate: "" });
+        }
+        
+        setLocalSchool(school || "");
+        setLocalArtist(artist || "");
+        setLocalRegion(region || "");
+    }, [date, school, artist, region]);
 
     // 지역 선택 옵션
     const regionOptions = [
@@ -40,28 +64,23 @@ const Filter = ({
     ];
 
     const handleApplyFilters = () => {
-        // 날짜 필터 적용 (단일 날짜로 변경)
+        // 날짜 필터 적용 (날짜 범위로 변경)
         if (onDateFilter) {
-            // 날짜 필드가 비어있더라도 필터 적용
-            // 이렇게 하면 필터 내용이 비워졌을 때 해당 필터 제거 가능
             onDateFilter(localDate);
         }
 
         // 학교 필터 적용
         if (onSchoolFilter) {
-            // 학교 필드가 비어있더라도 필터 적용
             onSchoolFilter(localSchool);
         }
 
         // 아티스트 필터 적용
         if (onArtistFilter) {
-            // 아티스트 필드가 비어있더라도 필터 적용
             onArtistFilter(localArtist);
         }
 
         // 지역 필터 적용
         if (onRegionFilter) {
-            // 지역 필드가 비어있더라도 필터 적용
             onRegionFilter(localRegion);
         }
 
@@ -71,7 +90,7 @@ const Filter = ({
 
     const handleClearFilters = () => {
         // 로컬 필터 상태 초기화
-        setLocalDate("");
+        setLocalDate({ startDate: "", endDate: "" });
         setLocalSchool("");
         setLocalArtist("");
         setLocalRegion("");
@@ -94,7 +113,8 @@ const Filter = ({
     };
 
     // 필터가 적용되었는지 확인
-    const hasActiveFilters = localDate || localSchool || localArtist || localRegion;
+    const hasActiveFilters = (localDate && (localDate.startDate || localDate.endDate)) || 
+                            localSchool || localArtist || localRegion;
 
     return (
         <div className={`filter-section ${isExpanded ? 'expanded' : ''}`}>
@@ -116,21 +136,41 @@ const Filter = ({
                     <div className="filter-group">
                         <div className="filter-group-header">
                             <FaCalendarAlt />
-                            <h4>날짜</h4>
+                            <h4>날짜 범위</h4>
                         </div>
                         <div className="filter-row">
-                            <div className="filter-item full-width">
-                                <label className="filter-label" htmlFor="date">
-                                    날짜 선택
+                            <div className="filter-item half-width">
+                                <label className="filter-label" htmlFor="startDate">
+                                    시작 날짜
                                 </label>
                                 <div className="input-wrapper">
                                     <input
                                         type="date"
-                                        id="date"
+                                        id="startDate"
                                         className="filter-input"
-                                        value={localDate}
-                                        onChange={(e) => setLocalDate(e.target.value)}
-                                        min={getCurrentDate()}
+                                        value={localDate.startDate || ""}
+                                        onChange={(e) => setLocalDate({
+                                            ...localDate,
+                                            startDate: e.target.value
+                                        })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="filter-item half-width">
+                                <label className="filter-label" htmlFor="endDate">
+                                    종료 날짜
+                                </label>
+                                <div className="input-wrapper">
+                                    <input
+                                        type="date"
+                                        id="endDate"
+                                        className="filter-input"
+                                        value={localDate.endDate || ""}
+                                        onChange={(e) => setLocalDate({
+                                            ...localDate,
+                                            endDate: e.target.value
+                                        })}
+                                        min={localDate.startDate || ""}
                                     />
                                 </div>
                             </div>

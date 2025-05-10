@@ -126,54 +126,36 @@ export const searchFestivalsByArtist = async (artistName, festivals = null) => {
 
 // 날짜로 축제 검색
 export const searchFestivalsByDate = async (
-  date,
+  dateFilter,
   festivals = null
 ) => {
   // 이미 전체 데이터가 있는 경우 로컬에서 필터링
   if (festivals) {
+    console.log("Filtering festivals by date locally:", dateFilter);
+
+    // isDateInRange 유틸리티 함수 사용하여 날짜 범위 필터링
     return festivals.filter((festival) => {
-      // festival.startDate와 festival.endDate가 있는 경우 해당 날짜가 범위 내인지 확인
-      if (festival.startDate && festival.endDate) {
-        // 날짜 문자열을 Date 객체로 변환
-        const searchDate = new Date(date);
-
-        let startDate, endDate;
-
-        // timestamp 객체인 경우
-        if (festival.startDate && typeof festival.startDate.toDate === 'function') {
-          startDate = festival.startDate.toDate();
-        } else if (typeof festival.startDate === 'string') {
-          startDate = new Date(festival.startDate);
-        } else {
-          startDate = festival.startDate;
-        }
-
-        if (festival.endDate && typeof festival.endDate.toDate === 'function') {
-          endDate = festival.endDate.toDate();
-        } else if (typeof festival.endDate === 'string') {
-          endDate = new Date(festival.endDate);
-        } else {
-          endDate = festival.endDate;
-        }
-
-        // 날짜 비교를 위해 시간 정보 제거
-        searchDate.setHours(0, 0, 0, 0);
-        const startWithoutTime = new Date(startDate);
-        startWithoutTime.setHours(0, 0, 0, 0);
-        const endWithoutTime = new Date(endDate);
-        endWithoutTime.setHours(0, 0, 0, 0);
-
-        return searchDate >= startWithoutTime && searchDate <= endWithoutTime;
-      }
-
-      // 예전 방식 지원 (date 필드가 있는 경우)
-      return festival.date === date;
+      return isDateInRange(festival.startDate, festival.endDate, dateFilter);
     });
   }
 
   try {
-    // Firestore에서 날짜로 검색
-    const filteredFestivalsData = await getFestivalsByDate(date);
+    // 단일 날짜 문자열인 경우 (이전 버전 호환)
+    let filterDate = dateFilter;
+    if (typeof dateFilter === 'object' && (dateFilter.startDate || dateFilter.endDate)) {
+      // 시작 날짜와 종료 날짜 중 하나만 있는 경우에는 단일 날짜 검색
+      if (dateFilter.startDate && !dateFilter.endDate) {
+        filterDate = dateFilter.startDate;
+      } else if (!dateFilter.startDate && dateFilter.endDate) {
+        filterDate = dateFilter.endDate;
+      } else {
+        // 시작일과 종료일이 모두 있는 경우, 시작일로 검색 (그리고 후처리)
+        filterDate = dateFilter.startDate;
+      }
+    }
+
+    // Firestore에서 날짜로 검색 (단일 날짜 기준으로)
+    const filteredFestivalsData = await getFestivalsByDate(filterDate);
 
     // 데이터를 Festival 모델로 변환
     const filteredFestivals = filteredFestivalsData.map(festival =>
@@ -184,6 +166,13 @@ export const searchFestivalsByDate = async (
         artists: festival.artists || []
       })
     );
+
+    // 날짜 범위가 지정된 경우 클라이언트 측에서 추가 필터링
+    if (typeof dateFilter === 'object' && dateFilter.startDate && dateFilter.endDate) {
+      return filteredFestivals.filter(festival =>
+        isDateInRange(festival.startDate, festival.endDate, dateFilter)
+      );
+    }
 
     return filteredFestivals;
   } catch (error) {

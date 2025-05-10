@@ -8,8 +8,62 @@ class Festival {
     this.name = data.name || '';
     this.universityName = data.universityName || data.school || '';
     this.description = data.description || '';
-    this.startDate = data.startDate || null;
-    this.endDate = data.endDate || null;
+
+    // 날짜 처리 로직
+    if (data.startDate) {
+      if (typeof data.startDate === 'string') {
+        // 문자열로 저장된 날짜는 Date 객체로 변환
+        this.startDate = new Date(data.startDate);
+        // 유효하지 않은 날짜인 경우 원본 값 유지
+        if (isNaN(this.startDate.getTime())) {
+          console.warn(`Invalid startDate string: ${data.startDate}`);
+          this.startDate = data.startDate;
+        }
+      } else if (data.startDate && typeof data.startDate.toDate === 'function') {
+        // Firestore Timestamp는 Date 객체로 변환
+        this.startDate = data.startDate.toDate();
+      } else if (data.startDate instanceof Date) {
+        // 이미 Date 객체인 경우 그대로 사용
+        this.startDate = data.startDate;
+      } else {
+        // 그 외의 경우
+        console.warn(`Unknown startDate format:`, data.startDate);
+        this.startDate = data.startDate;
+      }
+    } else {
+      this.startDate = null;
+    }
+
+    if (data.endDate) {
+      if (typeof data.endDate === 'string') {
+        // 문자열로 저장된 날짜는 Date 객체로 변환
+        this.endDate = new Date(data.endDate);
+        // 유효하지 않은 날짜인 경우 원본 값 유지
+        if (isNaN(this.endDate.getTime())) {
+          console.warn(`Invalid endDate string: ${data.endDate}`);
+          this.endDate = data.endDate;
+        }
+      } else if (data.endDate && typeof data.endDate.toDate === 'function') {
+        // Firestore Timestamp는 Date 객체로 변환
+        this.endDate = data.endDate.toDate();
+      } else if (data.endDate instanceof Date) {
+        // 이미 Date 객체인 경우 그대로 사용
+        this.endDate = data.endDate;
+      } else {
+        // 그 외의 경우
+        console.warn(`Unknown endDate format:`, data.endDate);
+        this.endDate = data.endDate;
+      }
+    } else {
+      this.endDate = null;
+    }
+
+    // 이전 방식 지원 (단일 date 필드)
+    if (data.date && !this.startDate) {
+      this.startDate = data.date;
+      this.endDate = data.date;
+    }
+
     this.time = data.time || '';
     this.imageUrl = data.imageUrl || data.image || '';
     this.location = data.location || {

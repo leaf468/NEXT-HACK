@@ -13,36 +13,72 @@ function CalendarPage() {
   const [calendarEvents, setCalendarEvents] = useState({});
   const [selectedDateFestivals, setSelectedDateFestivals] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null); // 날짜 선택 여부를 추적
 
   // 모든 축제 데이터에서 날짜별 이벤트 정보 추출
   useEffect(() => {
     const events = {};
+
+    console.log("Processing festivals:", festivals);  // 디버깅용
+
+    // 초기 로딩 시 선택된 날짜가 없으면 모든 축제를 보여줌
+    if (!selectedDate) {
+      setSelectedDateFestivals(festivals);
+    }
 
     festivals.forEach((festival) => {
       // 축제의 시작일부터 종료일까지 모든 날짜에 이벤트 추가
       if (festival.startDate && festival.endDate) {
         let startDate, endDate;
 
+        console.log(`Festival ${festival.name} dates:`, {
+          startDate: festival.startDate,
+          startDateType: typeof festival.startDate,
+          endDate: festival.endDate,
+          endDateType: typeof festival.endDate
+        });  // 디버깅용
+
         // 타임스탬프 객체인 경우
         if (festival.startDate && typeof festival.startDate.toDate === 'function') {
           startDate = festival.startDate.toDate();
         } else if (typeof festival.startDate === 'string') {
           startDate = new Date(festival.startDate);
-        } else {
+        } else if (festival.startDate instanceof Date) {
           startDate = festival.startDate;
+        } else {
+          console.warn(`Unknown startDate format for festival ${festival.name}:`, festival.startDate);
+          startDate = new Date(); // 기본값
         }
 
         if (festival.endDate && typeof festival.endDate.toDate === 'function') {
           endDate = festival.endDate.toDate();
         } else if (typeof festival.endDate === 'string') {
           endDate = new Date(festival.endDate);
-        } else {
+        } else if (festival.endDate instanceof Date) {
           endDate = festival.endDate;
+        } else {
+          console.warn(`Unknown endDate format for festival ${festival.name}:`, festival.endDate);
+          endDate = startDate; // 기본값 - 시작일과 동일
+        }
+
+        console.log(`Festival ${festival.name} parsed dates:`, {
+          startDate,
+          endDate
+        });  // 디버깅용
+
+        // 유효한 날짜인지 확인
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          console.warn(`Invalid date for festival ${festival.name}:`, {
+            startDate,
+            endDate
+          });
+          return; // 이 축제는 건너뜀
         }
 
         // 시작일부터 종료일까지 반복
         for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
           const dateStr = format(date, "yyyy-MM-dd");
+          console.log(`Adding festival ${festival.name} to date ${dateStr}`);  // 디버깅용
 
           if (!events[dateStr]) {
             events[dateStr] = {
@@ -110,19 +146,39 @@ function CalendarPage() {
     });
 
     setCalendarEvents(events);
-  }, [festivals]);
+  }, [festivals, selectedDate]);
 
   // 날짜 클릭했을 때 처리
   const handleDateChange = async (date) => {
     setValue(date);
-    
+    setSelectedDate(date); // 날짜 선택 상태 업데이트
+
     // 선택한 날짜 형식 변환
     const dateStr = format(date, "yyyy-MM-dd");
-    
+    console.log("Selected date:", dateStr, "Date object:", date);  // 디버깅용
+
     try {
       setIsLoading(true);
       // Firebase에서 선택한 날짜의 축제 정보 가져오기
+      console.log("Fetching festivals for date:", dateStr);
       const dateSpecificFestivals = await getFestivalsByDate(dateStr);
+      console.log("Fetched festivals for date:", dateSpecificFestivals.length);  // 디버깅용
+
+      // 날짜 데이터 로그
+      dateSpecificFestivals.forEach(festival => {
+        console.log(`Festival ${festival.name} dates:`, {
+          id: festival.id,
+          startDate: festival.startDate,
+          startDateType: typeof festival.startDate,
+          isStartDateInstance: festival.startDate instanceof Date,
+          startDateTimestamp: festival.startDate instanceof Date ? festival.startDate.getTime() : null,
+          endDate: festival.endDate,
+          endDateType: typeof festival.endDate,
+          isEndDateInstance: festival.endDate instanceof Date,
+          endDateTimestamp: festival.endDate instanceof Date ? festival.endDate.getTime() : null
+        });
+      });
+
       setSelectedDateFestivals(dateSpecificFestivals);
     } catch (error) {
       console.error("날짜별 축제 정보를 가져오는데 실패했습니다:", error);
@@ -152,17 +208,71 @@ function CalendarPage() {
 
   // 선택한 날짜의 아티스트 이벤트 표시
   const renderArtistEvents = () => {
+    if (isLoading) {
+      return <p>데이터를 불러오는 중...</p>;
+    }
+
+    // 날짜가 선택되지 않은 경우 (초기 로딩 시) - 모든 아티스트를 표시
+    if (!selectedDate) {
+      // 모든 축제의 아티스트 정보 수집
+      const allArtists = selectedDateFestivals.flatMap(festival =>
+        festival.artists?.map(artist => ({
+          name: artist.name,
+          festivalId: festival.id,
+          festivalName: festival.name || "축제",
+          schoolName: festival.university?.name || festival.universityName || festival.school || "학교",
+          time: artist.time || "시간 미정",
+          // 축제 날짜 정보 포함
+          festivalStartDate: festival.startDate,
+          festivalEndDate: festival.endDate
+        })) || []
+      );
+
+      // 중복 제거: 같은 이름의 아티스트는 한 번만 표시
+      const artistMap = new Map();
+      allArtists.forEach(artist => {
+        if (!artistMap.has(artist.name)) {
+          artistMap.set(artist.name, artist);
+        }
+      });
+
+      // 중복이 제거된 아티스트 목록
+      const uniqueArtistList = Array.from(artistMap.values());
+
+      if (uniqueArtistList.length === 0) {
+        return <p>등록된 아티스트 정보가 없습니다.</p>;
+      }
+
+      return (
+        <div className="selected-date-events">
+          <h3>모든 공연 아티스트</h3>
+          <ul className="event-list">
+            {uniqueArtistList.map((artist, index) => (
+              <li key={index} className="event-item">
+                <div className="event-name">{artist.name}</div>
+                <div className="event-details">
+                  <span>{artist.schoolName} - {artist.festivalName}</span>
+                  <span className="event-time">{typeof artist.time === 'string' ? artist.time.split(" ")[1] || "시간 미정" : "시간 미정"}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    // 특정 날짜가 선택된 경우
     const dateStr = format(value, "yyyy-MM-dd");
 
     // 새로 가져온 데이터 사용
     const allArtists = selectedDateFestivals.flatMap(festival =>
-      festival.artists.map(artist => ({
+      festival.artists?.map(artist => ({
         name: artist.name,
         festivalId: festival.id,
         festivalName: festival.name || "축제",
-        schoolName: festival.university?.name || festival.universityName || "학교",
+        schoolName: festival.university?.name || festival.universityName || festival.school || "학교",
         time: artist.time || "시간 미정"
-      }))
+      })) || []
     );
 
     // 중복 제거: 같은 이름의 아티스트는 한 번만 표시
@@ -176,10 +286,6 @@ function CalendarPage() {
 
     // 중복이 제거된 아티스트 목록
     const uniqueArtistList = Array.from(artistMap.values());
-
-    if (isLoading) {
-      return <p>데이터를 불러오는 중...</p>;
-    }
 
     if (uniqueArtistList.length === 0) {
       // 기존 캐시된 데이터도 확인해보자 (백업)
@@ -236,21 +342,55 @@ function CalendarPage() {
 
   // 선택한 날짜의 학교 이벤트 표시
   const renderSchoolEvents = () => {
+    if (isLoading) {
+      return <p>데이터를 불러오는 중...</p>;
+    }
+
+    // 날짜가 선택되지 않은 경우 (초기 로딩 시) - 모든 학교를 표시
+    if (!selectedDate) {
+      let schoolSet = new Set();
+      selectedDateFestivals.forEach(festival => {
+        const schoolName = festival.university?.name || festival.universityName || festival.school || "학교 이름 없음";
+        if (schoolName && schoolName !== "학교 이름 없음") {
+          schoolSet.add(schoolName);
+        }
+      });
+
+      // 중복이 제거된 학교 목록
+      const uniqueSchoolList = Array.from(schoolSet);
+
+      if (uniqueSchoolList.length === 0) {
+        return <p>등록된 학교 정보가 없습니다.</p>;
+      }
+
+      return (
+        <div className="selected-date-events">
+          <h3>모든 페스티벌 학교</h3>
+          <ul className="event-list">
+            {uniqueSchoolList.map((school, index) => (
+              <li key={index} className="event-item">
+                <div className="event-name">{school}</div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    // 특정 날짜가 선택된 경우
     const dateStr = format(value, "yyyy-MM-dd");
 
     // 새로 가져온 데이터 사용
     let schoolSet = new Set();
     selectedDateFestivals.forEach(festival => {
-      const schoolName = festival.university?.name || festival.universityName || "학교 이름 없음";
-      schoolSet.add(schoolName);
+      const schoolName = festival.university?.name || festival.universityName || festival.school || "학교 이름 없음";
+      if (schoolName && schoolName !== "학교 이름 없음") {
+        schoolSet.add(schoolName);
+      }
     });
 
     // 중복이 제거된 학교 목록
     const uniqueSchoolList = Array.from(schoolSet);
-
-    if (isLoading) {
-      return <p>데이터를 불러오는 중...</p>;
-    }
 
     if (uniqueSchoolList.length === 0) {
       // 기존 캐시된 데이터도 확인해보자 (백업)

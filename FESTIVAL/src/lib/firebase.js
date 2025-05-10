@@ -114,10 +114,19 @@ export const getFestivalsByDate = async (date) => {
     const festivalsRef = collection(db, "festivals");
     // 타임스탬프로 검색하기 위해 날짜 시작과 끝을 계산
     const searchDate = new Date(date);
+
+    // 날짜가 유효한지 확인
+    if (isNaN(searchDate.getTime())) {
+      console.error("Invalid date format:", date);
+      return [];
+    }
+
     const startOfDay = new Date(searchDate);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(searchDate);
     endOfDay.setHours(23, 59, 59, 999);
+
+    console.log(`Searching for festivals on date: ${date}, searchDate: ${searchDate.toISOString()}`);
 
     // startDate <= endOfDay && endDate >= startOfDay 조건으로 날짜 범위 내 축제 검색
     // 참고: 이 방식은 Firebase의 where 조건이 복잡한 날짜 범위 쿼리를 효과적으로 지원하지 않아
@@ -128,18 +137,54 @@ export const getFestivalsByDate = async (date) => {
     for (const festivalDoc of festivalSnapshot.docs) {
       const festivalData = festivalDoc.data();
 
+      // 로깅을 통한 디버깅
+      console.log(`Checking festival "${festivalData.name || 'Unknown'}" (ID: ${festivalDoc.id})`);
+
       // 날짜 범위 내에 있는지 확인 (타임스탬프 필드 기준)
       // 만약 타임스탬프로 저장되어 있지 않으면 원래 방식도 유지
       let isInDateRange = false;
 
       // 타임스탬프 방식 확인
       if (festivalData.startDate && festivalData.endDate) {
-        const festivalStartDate = festivalData.startDate.toDate ?
-                                festivalData.startDate.toDate() :
-                                new Date(festivalData.startDate);
-        const festivalEndDate = festivalData.endDate.toDate ?
-                              festivalData.endDate.toDate() :
-                              new Date(festivalData.endDate);
+        let festivalStartDate, festivalEndDate;
+
+        // 타임스탬프 객체인 경우
+        if (festivalData.startDate && typeof festivalData.startDate.toDate === 'function') {
+          festivalStartDate = festivalData.startDate.toDate();
+          console.log(`Festival start date (timestamp): ${festivalStartDate}`);
+        } else if (typeof festivalData.startDate === 'string') {
+          festivalStartDate = new Date(festivalData.startDate);
+          console.log(`Festival start date (string): ${festivalStartDate}`);
+        } else if (festivalData.startDate instanceof Date) {
+          festivalStartDate = festivalData.startDate;
+          console.log(`Festival start date (Date object): ${festivalStartDate}`);
+        } else {
+          console.warn(`Unknown startDate format: ${typeof festivalData.startDate}`);
+          festivalStartDate = new Date(festivalData.startDate);
+        }
+
+        if (festivalData.endDate && typeof festivalData.endDate.toDate === 'function') {
+          festivalEndDate = festivalData.endDate.toDate();
+          console.log(`Festival end date (timestamp): ${festivalEndDate}`);
+        } else if (typeof festivalData.endDate === 'string') {
+          festivalEndDate = new Date(festivalData.endDate);
+          console.log(`Festival end date (string): ${festivalEndDate}`);
+        } else if (festivalData.endDate instanceof Date) {
+          festivalEndDate = festivalData.endDate;
+          console.log(`Festival end date (Date object): ${festivalEndDate}`);
+        } else {
+          console.warn(`Unknown endDate format: ${typeof festivalData.endDate}`);
+          festivalEndDate = new Date(festivalData.endDate);
+        }
+
+        // 유효한 날짜인지 확인
+        if (isNaN(festivalStartDate.getTime()) || isNaN(festivalEndDate.getTime())) {
+          console.warn(`Invalid date for festival ${festivalData.name || 'Unknown'}:`, {
+            startDate: festivalStartDate,
+            endDate: festivalEndDate
+          });
+          continue; // 유효하지 않은 날짜는 건너뜀
+        }
 
         // 날짜 비교를 위해 시간 정보 제거
         const startWithoutTime = new Date(festivalStartDate);
@@ -149,13 +194,36 @@ export const getFestivalsByDate = async (date) => {
 
         // 검색 날짜가 축제 기간 내에 있는지 확인
         isInDateRange = searchDate >= startWithoutTime && searchDate <= endWithoutTime;
+
+        console.log(`Date range check for ${festivalData.name || 'Unknown'}:
+          - Search date: ${searchDate.toISOString()}
+          - Festival start: ${startWithoutTime.toISOString()}
+          - Festival end: ${endWithoutTime.toISOString()}
+          - Is in range: ${isInDateRange}`);
       }
       // 예전 방식 지원 (date 필드가 있는 경우)
-      else if (festivalData.date === date) {
-        isInDateRange = true;
+      else if (festivalData.date) {
+        // date 필드 형식이 문자열인지 확인 후 비교
+        if (typeof festivalData.date === 'string') {
+          // YYYY-MM-DD 형식의 날짜 비교
+          isInDateRange = festivalData.date === date;
+          console.log(`Legacy date check (string comparison): ${festivalData.date} === ${date}, result: ${isInDateRange}`);
+        } else if (festivalData.date instanceof Date) {
+          // Date 객체인 경우 날짜만 비교
+          const festivalDateStr = festivalData.date.toISOString().split('T')[0];
+          isInDateRange = festivalDateStr === date;
+          console.log(`Legacy date check (Date object): ${festivalDateStr} === ${date}, result: ${isInDateRange}`);
+        } else if (festivalData.date && typeof festivalData.date.toDate === 'function') {
+          // Firestore Timestamp인 경우
+          const festivalDateObj = festivalData.date.toDate();
+          const festivalDateStr = festivalDateObj.toISOString().split('T')[0];
+          isInDateRange = festivalDateStr === date;
+          console.log(`Legacy date check (Timestamp): ${festivalDateStr} === ${date}, result: ${isInDateRange}`);
+        }
       }
 
       if (!isInDateRange) {
+        console.log(`Festival "${festivalData.name || 'Unknown'}" is not in date range. Skipping.`);
         continue; // 날짜 범위에 없으면 건너뜀
       }
 

@@ -3,7 +3,7 @@ import { ko } from "date-fns/locale";
 
 // 날짜 포맷팅 (Timestamp 또는 YYYY-MM-DD -> YYYY년 MM월 DD일)
 export const formatDate = (dateValue) => {
-    if (!dateValue) return "";
+    if (!dateValue) return "날짜 정보 없음";
 
     try {
         let date;
@@ -24,10 +24,24 @@ export const formatDate = (dateValue) => {
             date = dateValue;
         }
 
+        // 유효한 날짜인지 확인
+        if (isNaN(date.getTime())) {
+            console.warn("유효하지 않은 날짜:", dateValue);
+            if (typeof dateValue === "string") {
+                return dateValue; // 원본 문자열 반환
+            }
+            return "날짜 정보 오류";
+        }
+
         return format(date, "yyyy년 MM월 dd일", { locale: ko });
     } catch (error) {
         console.error("날짜 포맷팅 오류:", error, dateValue);
-        return String(dateValue);
+        // 문자열 형태로 반환할 수 있으면 원본 값 그대로 반환
+        if (typeof dateValue === "string") {
+            return dateValue;
+        }
+        // 그 외에는 오류 메시지
+        return "날짜 형식 오류";
     }
 };
 
@@ -73,11 +87,13 @@ export const formatDateTime = (dateTimeString) => {
 export const isDateInRange = (
     festivalStart,
     festivalEnd,
-    filterStart,
-    filterEnd
+    filterDate
 ) => {
-    if (!festivalStart || !festivalEnd || !filterStart || !filterEnd)
-        return true;
+    // 필터가 없는 경우 모든 축제 포함
+    if (!festivalStart || !festivalEnd) return true;
+
+    // 필터 데이터가 없거나 시작/종료 날짜 둘 다 없는 경우 모든 축제 포함
+    if (!filterDate || (!filterDate.startDate && !filterDate.endDate)) return true;
 
     try {
         // 타임스탬프 객체인 경우 Date로 변환
@@ -86,8 +102,11 @@ export const isDateInRange = (
             fStart = parseISO(festivalStart);
         } else if (festivalStart && typeof festivalStart.toDate === 'function') {
             fStart = festivalStart.toDate();
-        } else {
+        } else if (festivalStart instanceof Date) {
             fStart = festivalStart;
+        } else {
+            console.warn("Unknown festivalStart format:", festivalStart);
+            return true; // 알 수 없는 형식인 경우 일단 포함시킴
         }
 
         let fEnd;
@@ -95,28 +114,97 @@ export const isDateInRange = (
             fEnd = parseISO(festivalEnd);
         } else if (festivalEnd && typeof festivalEnd.toDate === 'function') {
             fEnd = festivalEnd.toDate();
-        } else {
+        } else if (festivalEnd instanceof Date) {
             fEnd = festivalEnd;
+        } else {
+            console.warn("Unknown festivalEnd format:", festivalEnd);
+            return true; // 알 수 없는 형식인 경우 일단 포함시킴
         }
 
-        const start =
-            typeof filterStart === "string"
-                ? parseISO(filterStart)
-                : filterStart;
-        const end =
-            typeof filterEnd === "string" ? parseISO(filterEnd) : filterEnd;
+        // 날짜가 유효한지 확인
+        if (isNaN(fStart.getTime()) || isNaN(fEnd.getTime())) {
+            console.warn("Invalid festival date in range check:", { fStart, fEnd });
+            return true; // 유효하지 않은 날짜는 일단 포함시킴
+        }
+
+        // 날짜 비교를 위해 시간 정보 표준화
+        fStart.setHours(0, 0, 0, 0);
+        fEnd.setHours(23, 59, 59, 999);
+
+        // 필터 날짜가 객체가 아닌 경우 처리 (이전 호환성)
+        if (typeof filterDate === "string") {
+            // 단일 날짜 필터링
+            const singleDate = parseISO(filterDate);
+            singleDate.setHours(0, 0, 0, 0);
+
+            // 유효하지 않은 날짜인 경우 모든 축제 포함
+            if (isNaN(singleDate.getTime())) {
+                console.warn("Invalid filter date:", filterDate);
+                return true;
+            }
+
+            // 단일 날짜가 축제 기간 내에 있는지 확인
+            return isWithinInterval(singleDate, { start: fStart, end: fEnd });
+        }
+
+        // 필터의 시작 날짜만 있는 경우
+        if (filterDate.startDate && !filterDate.endDate) {
+            const start = parseISO(filterDate.startDate);
+            start.setHours(0, 0, 0, 0);
+
+            // 유효하지 않은 날짜인 경우 모든 축제 포함
+            if (isNaN(start.getTime())) {
+                console.warn("Invalid startDate in filter:", filterDate.startDate);
+                return true;
+            }
+
+            // 축제 종료일이 필터 시작일 이후인 경우 포함 (축제가 필터 날짜에 진행 중이거나 이후에 시작)
+            return fEnd >= start;
+        }
+
+        // 필터의 종료 날짜만 있는 경우
+        if (!filterDate.startDate && filterDate.endDate) {
+            const end = parseISO(filterDate.endDate);
+            end.setHours(23, 59, 59, 999);
+
+            // 유효하지 않은 날짜인 경우 모든 축제 포함
+            if (isNaN(end.getTime())) {
+                console.warn("Invalid endDate in filter:", filterDate.endDate);
+                return true;
+            }
+
+            // 축제 시작일이 필터 종료일 이전인 경우 포함 (축제가 필터 날짜에 진행 중이거나 이전에 시작)
+            return fStart <= end;
+        }
+
+        // 필터의 시작과 종료 날짜가 모두 있는 경우
+        const start = parseISO(filterDate.startDate);
+        start.setHours(0, 0, 0, 0);
+
+        const end = parseISO(filterDate.endDate);
+        end.setHours(23, 59, 59, 999);
+
+        // 유효하지 않은 날짜인 경우 모든 축제 포함
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            console.warn("Invalid date in filter range:", { start, end });
+            return true;
+        }
 
         // 축제 기간과 필터 기간이 겹치는지 확인
-        return (
+        // 다음 조건 중 하나라도 true면 축제를 표시:
+        // 1. 축제가 필터 범위 내에서 시작하거나 종료
+        // 2. 축제가 필터 범위를 완전히 포함
+        // 3. 축제가 필터 범위 안에 완전히 포함됨
+        const isInRange = (
             // 축제 시작일이 필터 기간 내에 있거나
-            isWithinInterval(fStart, { start, end }) ||
+            (fStart >= start && fStart <= end) ||
             // 축제 종료일이 필터 기간 내에 있거나
-            isWithinInterval(fEnd, { start, end }) ||
-            // 필터 시작일이 축제 기간 내에 있거나
-            isWithinInterval(start, { start: fStart, end: fEnd }) ||
-            // 필터 종료일이 축제 기간 내에 있는 경우
-            isWithinInterval(end, { start: fStart, end: fEnd })
+            (fEnd >= start && fEnd <= end) ||
+            // 축제가 필터 기간을 포함하는 경우 (축제 시작일이 필터 시작일보다 이전이고, 축제 종료일이 필터 종료일보다 이후)
+            (fStart <= start && fEnd >= end)
         );
+
+        return isInRange;
     } catch (error) {
         console.error("날짜 범위 확인 오류:", error);
         return true; // 오류 발생 시 기본적으로 표시

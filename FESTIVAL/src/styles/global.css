@@ -501,6 +501,11 @@ button {
     flex-basis: 100%;
 }
 
+.filter-item.half-width {
+    width: 50%;
+    flex-basis: calc(50% - 8px);
+}
+
 .filter-label {
     display: block;
     margin-bottom: 8px;
