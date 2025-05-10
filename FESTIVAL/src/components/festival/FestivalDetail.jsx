@@ -179,13 +179,7 @@ const FestivalDetail = ({ festival }) => {
                     <p className="subtext">
                         {festival.time ? festival.time : "시간 정보 없음"}
                     </p>
-                    {/* 디버깅용 정보 (개발 중에만 표시) */}
-                    {process.env.NODE_ENV === 'development' && (
-                        <div className="date-debug" style={{ fontSize: '0.8rem', color: '#666', marginTop: '0.5rem' }}>
-                            <p>StartDate: {String(festival.startDate)} ({typeof festival.startDate})</p>
-                            <p>EndDate: {String(festival.endDate)} ({typeof festival.endDate})</p>
-                        </div>
-                    )}
+                    {/* 디버깅용 정보는 숨김 처리 */}
                 </div>
 
                 {festival.location && festival.location.address && (
@@ -263,7 +257,7 @@ const FestivalDetail = ({ festival }) => {
             {/* 카더라 게시판 섹션 */}
             <div className="festival-detail-section kadera-section">
                 <h2 className="section-title">
-                    <FaComments className="icon" />
+                    <FaComments className="icon" style={{fontSize: '0.85em'}} />
                     카더라 게시판
                 </h2>
                 <CommentForm
