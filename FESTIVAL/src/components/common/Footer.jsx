@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FaInstagram, FaTwitter, FaFacebook } from "react-icons/fa";
 
 const Footer = () => {
     return (
@@ -11,32 +10,6 @@ const Footer = () => {
                     <p className="footer-description">
                         전국 대학교 축제 정보를 한눈에 확인하세요.
                     </p>
-                    <div className="social-links">
-                        <a
-                            href="https://instagram.com"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="Instagram"
-                        >
-                            <FaInstagram />
-                        </a>
-                        <a
-                            href="https://twitter.com"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="Twitter"
-                        >
-                            <FaTwitter />
-                        </a>
-                        <a
-                            href="https://facebook.com"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="Facebook"
-                        >
-                            <FaFacebook />
-                        </a>
-                    </div>
                 </div>
 
                 <div className="footer-section">
