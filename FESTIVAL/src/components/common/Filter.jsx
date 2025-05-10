@@ -150,12 +150,12 @@ const Filter = ({
                     <div className="filter-group">
                         <div className="filter-group-header">
                             <FaCalendarAlt />
-                            <h4>날짜 범위</h4>
+                            <h4>날짜</h4>
                         </div>
                         <div className="filter-row">
-                            <div className="filter-item half-width">
+                            <div className="filter-item">
                                 <label className="filter-label" htmlFor="startDate">
-                                    시작 날짜
+                                    시작일
                                 </label>
                                 <div className="input-wrapper">
                                     <input
@@ -165,25 +165,19 @@ const Filter = ({
                                         value={localDate.startDate || ""}
                                         onChange={(e) => {
                                             const newStartDate = e.target.value;
-                                            // 시작일이 종료일보다 이후인 경우 종료일도 함께 변경
-                                            if (localDate.endDate && newStartDate > localDate.endDate) {
-                                                setLocalDate({
-                                                    startDate: newStartDate,
-                                                    endDate: newStartDate
-                                                });
-                                            } else {
-                                                setLocalDate({
-                                                    ...localDate,
-                                                    startDate: newStartDate
-                                                });
-                                            }
+                                            setLocalDate({
+                                                ...localDate,
+                                                startDate: newStartDate,
+                                                // If end date is empty or before start date, set it to start date
+                                                endDate: !localDate.endDate || newStartDate > localDate.endDate ? newStartDate : localDate.endDate
+                                            });
                                         }}
                                     />
                                 </div>
                             </div>
-                            <div className="filter-item half-width">
+                            <div className="filter-item">
                                 <label className="filter-label" htmlFor="endDate">
-                                    종료 날짜
+                                    종료일
                                 </label>
                                 <div className="input-wrapper">
                                     <input
@@ -191,12 +185,14 @@ const Filter = ({
                                         id="endDate"
                                         className="filter-input"
                                         value={localDate.endDate || ""}
-                                        onChange={(e) => setLocalDate({
-                                            ...localDate,
-                                            endDate: e.target.value
-                                        })}
                                         min={localDate.startDate || ""}
-                                        disabled={!localDate.startDate} // 시작일이 없으면 종료일 선택 불가
+                                        onChange={(e) => {
+                                            const newEndDate = e.target.value;
+                                            setLocalDate({
+                                                ...localDate,
+                                                endDate: newEndDate
+                                            });
+                                        }}
                                     />
                                 </div>
                             </div>

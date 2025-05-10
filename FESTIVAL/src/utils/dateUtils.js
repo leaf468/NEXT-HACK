@@ -83,22 +83,22 @@ export const formatDateTime = (dateTimeString) => {
     }
 };
 
-// 날짜 간격 체크 (축제 날짜가 선택된 날짜 범위 내에 있는지)
+// 날짜 간격 체크 (축제 날짜가 선택된 필터 날짜 범위에 포함되는지)
 export const isDateInRange = (
     festivalStart,
     festivalEnd,
     filterDate
 ) => {
     // 축제 날짜가 없는 경우 모든 필터링에서 제외
-    if (!festivalStart || !festivalEnd) return true;
+    if (!festivalStart) return true;
 
     // 필터 데이터가 없는 경우 모든 축제 포함
     if (!filterDate) return true;
 
-    // 필터 날짜가 빈 객체이거나 시작/종료 날짜 둘 다 없는 경우 모든 축제 포함
+    // 필터 날짜가 빈 객체이거나 시작 날짜가 없는 경우 모든 축제 포함
     if (
         (typeof filterDate === 'object' && Object.keys(filterDate).length === 0) ||
-        (filterDate.startDate === "" && filterDate.endDate === "")
+        (filterDate.startDate === "")
     ) {
         return true;
     }
@@ -106,7 +106,7 @@ export const isDateInRange = (
     try {
         console.log("isDateInRange checking with filterDate:", filterDate);
 
-        // 타임스탬프 객체인 경우 Date로 변환
+        // 축제 시작 날짜 변환
         let fStart;
         if (typeof festivalStart === "string") {
             fStart = parseISO(festivalStart);
@@ -119,16 +119,18 @@ export const isDateInRange = (
             return true; // 알 수 없는 형식인 경우 일단 포함시킴
         }
 
+        // 축제 종료 날짜 변환 (없으면 시작일과 같다고 가정)
         let fEnd;
-        if (typeof festivalEnd === "string") {
+        if (!festivalEnd) {
+            fEnd = new Date(fStart);
+        } else if (typeof festivalEnd === "string") {
             fEnd = parseISO(festivalEnd);
         } else if (festivalEnd && typeof festivalEnd.toDate === 'function') {
             fEnd = festivalEnd.toDate();
         } else if (festivalEnd instanceof Date) {
             fEnd = festivalEnd;
         } else {
-            console.warn("Unknown festivalEnd format:", festivalEnd);
-            return true; // 알 수 없는 형식인 경우 일단 포함시킴
+            fEnd = new Date(fStart);
         }
 
         // 날짜가 유효한지 확인
@@ -139,13 +141,16 @@ export const isDateInRange = (
 
         // 날짜 비교를 위해 시간 정보 표준화
         fStart.setHours(0, 0, 0, 0);
-        fEnd.setHours(23, 59, 59, 999);
+        fEnd.setHours(23, 59, 59, 999); // 종료일은 하루의 끝으로 설정
 
-        // 필터 날짜가 객체가 아닌 경우 처리 (이전 호환성)
+        // 필터 날짜 처리
         if (typeof filterDate === "string") {
             // 단일 날짜 필터링
             const singleDate = parseISO(filterDate);
+            const endOfDay = new Date(singleDate);
+
             singleDate.setHours(0, 0, 0, 0);
+            endOfDay.setHours(23, 59, 59, 999);
 
             // 유효하지 않은 날짜인 경우 모든 축제 포함
             if (isNaN(singleDate.getTime())) {
@@ -153,66 +158,48 @@ export const isDateInRange = (
                 return true;
             }
 
-            // 단일 날짜가 축제 기간 내에 있는지 확인
-            return isWithinInterval(singleDate, { start: fStart, end: fEnd });
+            // 선택한 날짜가 축제 기간에 포함되는지 확인
+            return (
+                (fStart <= endOfDay && fEnd >= singleDate) // 축제 기간과 선택 날짜가 겹치는지
+            );
         }
 
-        // 필터의 시작 날짜만 있는 경우
-        if (filterDate.startDate && !filterDate.endDate) {
-            const start = parseISO(filterDate.startDate);
-            start.setHours(0, 0, 0, 0);
+        // 필터에 날짜 범위가 있는 경우
+        if (filterDate.startDate) {
+            const filterStartDate = parseISO(filterDate.startDate);
+            filterStartDate.setHours(0, 0, 0, 0);
+
+            // 시작일만 있고 종료일이 없거나 같은 경우 (단일 날짜 선택)
+            if (!filterDate.endDate || filterDate.endDate === filterDate.startDate) {
+                const endOfFilterDay = new Date(filterStartDate);
+                endOfFilterDay.setHours(23, 59, 59, 999);
+
+                return (
+                    (fStart <= endOfFilterDay && fEnd >= filterStartDate) // 축제 기간과 선택 날짜가 겹치는지
+                );
+            }
+
+            // 날짜 범위 필터링
+            const filterEndDate = parseISO(filterDate.endDate);
+            filterEndDate.setHours(23, 59, 59, 999); // 종료일은 하루의 끝으로 설정
 
             // 유효하지 않은 날짜인 경우 모든 축제 포함
-            if (isNaN(start.getTime())) {
-                console.warn("Invalid startDate in filter:", filterDate.startDate);
+            if (isNaN(filterStartDate.getTime()) || isNaN(filterEndDate.getTime())) {
+                console.warn("Invalid date range in filter:", {
+                    start: filterDate.startDate,
+                    end: filterDate.endDate
+                });
                 return true;
             }
 
-            // 축제 종료일이 필터 시작일 이후인 경우 포함 (축제가 필터 날짜에 진행 중이거나 이후에 시작)
-            return fEnd >= start;
+            // 축제가 필터 날짜 범위와 겹치는지 확인
+            return (
+                // 축제가 필터 범위에 완전히 포함되거나, 일부 겹치는 경우 표시
+                (fStart <= filterEndDate && fEnd >= filterStartDate)
+            );
         }
 
-        // 필터의 종료 날짜만 있는 경우
-        if (!filterDate.startDate && filterDate.endDate) {
-            const end = parseISO(filterDate.endDate);
-            end.setHours(23, 59, 59, 999);
-
-            // 유효하지 않은 날짜인 경우 모든 축제 포함
-            if (isNaN(end.getTime())) {
-                console.warn("Invalid endDate in filter:", filterDate.endDate);
-                return true;
-            }
-
-            // 축제 시작일이 필터 종료일 이전인 경우 포함 (축제가 필터 날짜에 진행 중이거나 이전에 시작)
-            return fStart <= end;
-        }
-
-        // 필터의 시작과 종료 날짜가 모두 있는 경우
-        const start = parseISO(filterDate.startDate);
-        start.setHours(0, 0, 0, 0);
-
-        const end = parseISO(filterDate.endDate);
-        end.setHours(23, 59, 59, 999);
-
-        // 유효하지 않은 날짜인 경우 모든 축제 포함
-        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-            console.warn("Invalid date in filter range:", { start, end });
-            return true;
-        }
-
-        // 축제 날짜 범위와 필터 날짜 범위가 겹치는지 확인 (간소화된 로직)
-        // 다음 조건 중 하나라도 true면 해당 축제는 필터 범위와 겹침:
-        // - 축제 시작일이 필터 범위 내에 있음
-        // - 축제 종료일이 필터 범위 내에 있음
-        // - 축제 기간이 필터 기간을 완전히 포함함
-        return (
-            // 축제 시작일이 필터 기간 내에 있는 경우
-            (fStart >= start && fStart <= end) ||
-            // 축제 종료일이 필터 기간 내에 있는 경우
-            (fEnd >= start && fEnd <= end) ||
-            // 축제 기간이 필터 기간을 완전히 포함하는 경우
-            (fStart <= start && fEnd >= end)
-        );
+        return true; // 기본적으로 모든 축제 포함
     } catch (error) {
         console.error("날짜 범위 확인 오류:", error, { filterDate, festivalStart, festivalEnd });
         return true; // 오류 발생 시 기본적으로 표시

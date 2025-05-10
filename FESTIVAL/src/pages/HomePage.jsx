@@ -59,14 +59,22 @@ const HomePage = () => {
     // 날짜 필터 핸들러
     const handleDateFilter = (dateRange) => {
         updateFilters({ date: dateRange });
-        if (dateRange.startDate && dateRange.endDate) {
-            displayNotification(
-                "날짜 필터",
-                `${formatDate(dateRange.startDate)} ~ ${formatDate(
-                    dateRange.endDate
-                )} 기간의 축제를 필터링합니다.`,
-                "info"
-            );
+        if (dateRange.startDate) {
+            // 시작일과 종료일이 같거나 종료일이 없는 경우 단일 날짜 메시지
+            if (dateRange.startDate === dateRange.endDate || !dateRange.endDate) {
+                displayNotification(
+                    "날짜 필터",
+                    `${formatDate(dateRange.startDate)} 날짜의 축제를 필터링합니다.`,
+                    "info"
+                );
+            } else {
+                // 날짜 범위 메시지
+                displayNotification(
+                    "기간 필터",
+                    `${formatDate(dateRange.startDate)} ~ ${formatDate(dateRange.endDate)} 기간의 축제를 필터링합니다.`,
+                    "info"
+                );
+            }
         }
     };
 
@@ -209,10 +217,13 @@ const HomePage = () => {
                             </button>
                         </div>
                     )}
-                    {filters.date && filters.date.startDate && filters.date.endDate && (
+                    {filters.date && filters.date.startDate && (
                         <div className="filter-tag">
-                            날짜: {formatDate(filters.date.startDate)} ~{" "}
-                            {formatDate(filters.date.endDate)}
+                            {filters.date.startDate === filters.date.endDate || !filters.date.endDate ? (
+                                <>날짜: {formatDate(filters.date.startDate)}</>
+                            ) : (
+                                <>기간: {formatDate(filters.date.startDate)} ~ {formatDate(filters.date.endDate)}</>
+                            )}
                             <button
                                 onClick={() =>
                                     updateFilters({

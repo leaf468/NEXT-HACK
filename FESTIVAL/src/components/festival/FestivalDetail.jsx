@@ -48,7 +48,7 @@ const FestivalDetail = ({ festival }) => {
                     title: `${getUniversityName()} ${festival.name}`,
                     text: `${getUniversityName()} ${festival.name} - ${formatDate(
                         festival.startDate
-                    )} ~ ${formatDate(festival.endDate)}`,
+                    )}`,
                     url: encodeURI(window.location.href),
                 })
                 .then(() => {
@@ -150,8 +150,7 @@ const FestivalDetail = ({ festival }) => {
                         일시
                     </h3>
                     <p>
-                        {formatDate(festival.startDate)} ~{" "}
-                        {formatDate(festival.endDate)}
+                        {formatDate(festival.startDate)}
                     </p>
                     <p className="subtext">
                         {festival.time ? festival.time : "시간 정보 없음"}

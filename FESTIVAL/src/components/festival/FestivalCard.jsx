@@ -79,8 +79,7 @@ const FestivalCard = ({ festival }) => {
                     <div className="festival-detail">
                         <FaCalendarAlt className="icon" />
                         <span>
-                            {formatDate(festival.startDate)} ~{" "}
-                            {formatDate(festival.endDate)}
+                            {formatDate(festival.startDate)}
                         </span>
                     </div>
 
