@@ -15,14 +15,34 @@ export const fetchFestivals = async () => {
     const festivalsData = await getAllFestivals();
 
     // 데이터를 Festival 모델로 변환
-    const festivals = festivalsData.map(festival =>
-      new Festival(festival.id, {
+    const festivals = festivalsData.map(festival => {
+      // Make sure we have the university name, even if university object is null
+      const universityName =
+        festival.university?.name || festival.universityName || festival.university_id || '';
+
+      // Make sure we properly handle artists
+      let artists = festival.artists || [];
+
+      // If artists array is empty but there's an artist_ids string, convert it to artist objects
+      if (artists.length === 0 && festival.artist_ids && typeof festival.artist_ids === 'string') {
+        const artistNames = festival.artist_ids.split(',').map(name => name.trim());
+        artists = artistNames.map(name => ({
+          id: `temp-${name}`,
+          name: name,
+          festivalId: festival.id
+        }));
+      }
+
+      return new Festival(festival.id, {
         ...festival,
-        universityName: festival.university?.name || '',
-        location: { region: festival.university?.location || '' },
-        artists: festival.artists || []
-      })
-    );
+        universityName: universityName,
+        location: {
+          region: festival.university?.location || festival.location?.region || '',
+          address: festival.university?.address || festival.location?.address || ''
+        },
+        artists: artists
+      });
+    });
 
     return festivals;
   } catch (error) {
@@ -42,11 +62,30 @@ export const fetchFestivalById = async (festivalId) => {
     }
 
     // 데이터를 Festival 모델로 변환
+    const universityName =
+      festivalData.university?.name || festivalData.universityName || festivalData.university_id || '';
+
+    // Make sure we properly handle artists
+    let artists = festivalData.artists || [];
+
+    // If artists array is empty but there's an artist_ids string, convert it to artist objects
+    if (artists.length === 0 && festivalData.artist_ids && typeof festivalData.artist_ids === 'string') {
+      const artistNames = festivalData.artist_ids.split(',').map(name => name.trim());
+      artists = artistNames.map(name => ({
+        id: `temp-${name}`,
+        name: name,
+        festivalId: festivalData.id
+      }));
+    }
+
     const festival = new Festival(festivalData.id, {
       ...festivalData,
-      universityName: festivalData.university?.name || '',
-      location: { region: festivalData.university?.location || '' },
-      artists: festivalData.artists || []
+      universityName: universityName,
+      location: {
+        region: festivalData.university?.location || festivalData.location?.region || '',
+        address: festivalData.university?.address || festivalData.location?.address || ''
+      },
+      artists: artists
     });
 
     return festival;
@@ -75,14 +114,34 @@ export const searchFestivalsBySchool = async (schoolName, festivals = null) => {
     const filteredFestivalsData = await searchFestivalsByUniversity(schoolName);
 
     // 데이터를 Festival 모델로 변환
-    const filteredFestivals = filteredFestivalsData.map(festival =>
-      new Festival(festival.id, {
+    const filteredFestivals = filteredFestivalsData.map(festival => {
+      // Make sure we have the university name, even if university object is null
+      const universityName =
+        festival.university?.name || festival.universityName || festival.university_id || '';
+
+      // Make sure we properly handle artists
+      let artists = festival.artists || [];
+
+      // If artists array is empty but there's an artist_ids string, convert it to artist objects
+      if (artists.length === 0 && festival.artist_ids && typeof festival.artist_ids === 'string') {
+        const artistNames = festival.artist_ids.split(',').map(name => name.trim());
+        artists = artistNames.map(name => ({
+          id: `temp-${name}`,
+          name: name,
+          festivalId: festival.id
+        }));
+      }
+
+      return new Festival(festival.id, {
         ...festival,
-        universityName: festival.university?.name || '',
-        location: { region: festival.university?.location || '' },
-        artists: festival.artists || []
-      })
-    );
+        universityName: universityName,
+        location: {
+          region: festival.university?.location || festival.location?.region || '',
+          address: festival.university?.address || festival.location?.address || ''
+        },
+        artists: artists
+      });
+    });
 
     return filteredFestivals;
   } catch (error) {
@@ -107,14 +166,34 @@ export const searchFestivalsByArtist = async (artistName, festivals = null) => {
     const filteredFestivalsData = await fetchFestivalsByArtist(artistName);
 
     // 데이터를 Festival 모델로 변환
-    const filteredFestivals = filteredFestivalsData.map(festival =>
-      new Festival(festival.id, {
+    const filteredFestivals = filteredFestivalsData.map(festival => {
+      // Make sure we have the university name, even if university object is null
+      const universityName =
+        festival.university?.name || festival.universityName || festival.university_id || '';
+
+      // Make sure we properly handle artists
+      let artists = festival.artists || [];
+
+      // If artists array is empty but there's an artist_ids string, convert it to artist objects
+      if (artists.length === 0 && festival.artist_ids && typeof festival.artist_ids === 'string') {
+        const artistNames = festival.artist_ids.split(',').map(name => name.trim());
+        artists = artistNames.map(name => ({
+          id: `temp-${name}`,
+          name: name,
+          festivalId: festival.id
+        }));
+      }
+
+      return new Festival(festival.id, {
         ...festival,
-        universityName: festival.university?.name || '',
-        location: { region: festival.university?.location || '' },
-        artists: festival.artists || []
-      })
-    );
+        universityName: universityName,
+        location: {
+          region: festival.university?.location || festival.location?.region || '',
+          address: festival.university?.address || festival.location?.address || ''
+        },
+        artists: artists
+      });
+    });
 
     return filteredFestivals;
   } catch (error) {
@@ -138,40 +217,73 @@ export const searchFestivalsByDate = async (
     return festivals || [];
   }
 
-  // 이미 전체 데이터가 있는 경우 로컬에서 필터링 (클라이언트 측)
-  if (festivals) {
-    console.log("Filtering festivals by date locally:", dateFilter);
-
-    // isDateInRange 유틸리티 함수 사용하여 날짜 범위 필터링
-    return festivals.filter((festival) => {
-      const result = isDateInRange(festival.startDate, festival.endDate, dateFilter);
-      console.log(`Festival ${festival.id} date range check:`, result);
-      return result;
-    });
-  }
-
-  // 서버에서 데이터를 가져오는 경우 (API 호출)
+  // dateFilter 유효성 검사 및 로깅 강화
   try {
-    // 모든 축제를 가져와서 클라이언트에서 필터링하는 방식으로 변경
-    const allFestivalsData = await getAllFestivals();
+    if (typeof dateFilter === 'string') {
+      console.log("Date filter is string type:", dateFilter);
+      // 한국어 날짜 형식 확인
+      if (dateFilter.includes('년')) {
+        console.log("Korean date format detected in string filter");
+      }
+    } else if (typeof dateFilter === 'object') {
+      if (dateFilter.startDate) {
+        console.log("Start date type:", typeof dateFilter.startDate, "Value:", dateFilter.startDate);
+      }
+      if (dateFilter.endDate) {
+        console.log("End date type:", typeof dateFilter.endDate, "Value:", dateFilter.endDate);
+      }
+    }
 
-    // 데이터를 Festival 모델로 변환
-    const allFestivals = allFestivalsData.map(festival =>
-      new Festival(festival.id, {
-        ...festival,
-        universityName: festival.university?.name || '',
-        location: { region: festival.university?.location || '' },
-        artists: festival.artists || []
-      })
-    );
+    // 이미 전체 데이터가 있는 경우 로컬에서 필터링 (클라이언트 측)
+    if (festivals) {
+      console.log("Filtering festivals by date locally:", dateFilter);
 
-    // 날짜 필터 적용
-    return allFestivals.filter(festival =>
-      isDateInRange(festival.startDate, festival.endDate, dateFilter)
-    );
+      // isDateInRange 유틸리티 함수 사용하여 날짜 범위 필터링
+      return festivals.filter((festival) => {
+        try {
+          const result = isDateInRange(festival.startDate, festival.endDate, dateFilter);
+          if (festival.id) { // 로그 줄이기 위해 특정 축제만 로깅
+            console.log(`Festival ${festival.id} date range check:`, result);
+          }
+          return result;
+        } catch (filterError) {
+          console.error("Festival date filter error for festival:", festival.id, filterError);
+          return true; // 오류 발생 시 기본적으로 포함
+        }
+      });
+    }
+
+    // 서버에서 데이터를 가져오는 경우 (API 호출)
+    try {
+      // 모든 축제를 가져와서 클라이언트에서 필터링하는 방식으로 변경
+      const allFestivalsData = await getAllFestivals();
+
+      // 데이터를 Festival 모델로 변환
+      const allFestivals = allFestivalsData.map(festival =>
+        new Festival(festival.id, {
+          ...festival,
+          universityName: festival.university?.name || '',
+          location: { region: festival.university?.location || '' },
+          artists: festival.artists || []
+        })
+      );
+
+      // 날짜 필터 적용
+      return allFestivals.filter(festival => {
+        try {
+          return isDateInRange(festival.startDate, festival.endDate, dateFilter);
+        } catch (filterError) {
+          console.error("Festival date filter error:", filterError);
+          return true; // 오류 발생 시 기본적으로 포함
+        }
+      });
+    } catch (fetchError) {
+      console.error("날짜별 축제 검색에 실패했습니다:", fetchError);
+      throw fetchError;
+    }
   } catch (error) {
-    console.error("날짜별 축제 검색에 실패했습니다:", error);
-    throw error;
+    console.error("Date filter processing error:", error);
+    return festivals || []; // 오류 발생 시 필터링하지 않고 그대로 반환
   }
 };
 
@@ -190,14 +302,34 @@ export const searchFestivalsByRegion = async (region, festivals = null) => {
     const filteredFestivalsData = await filterFestivalsByLocation(region);
 
     // 데이터를 Festival 모델로 변환
-    const filteredFestivals = filteredFestivalsData.map(festival =>
-      new Festival(festival.id, {
+    const filteredFestivals = filteredFestivalsData.map(festival => {
+      // Make sure we have the university name, even if university object is null
+      const universityName =
+        festival.university?.name || festival.universityName || festival.university_id || '';
+
+      // Make sure we properly handle artists
+      let artists = festival.artists || [];
+
+      // If artists array is empty but there's an artist_ids string, convert it to artist objects
+      if (artists.length === 0 && festival.artist_ids && typeof festival.artist_ids === 'string') {
+        const artistNames = festival.artist_ids.split(',').map(name => name.trim());
+        artists = artistNames.map(name => ({
+          id: `temp-${name}`,
+          name: name,
+          festivalId: festival.id
+        }));
+      }
+
+      return new Festival(festival.id, {
         ...festival,
-        universityName: festival.university?.name || '',
-        location: { region: festival.university?.location || '' },
-        artists: festival.artists || []
-      })
-    );
+        universityName: universityName,
+        location: {
+          region: festival.university?.location || festival.location?.region || '',
+          address: festival.university?.address || festival.location?.address || ''
+        },
+        artists: artists
+      });
+    });
     
     return filteredFestivals;
   } catch (error) {

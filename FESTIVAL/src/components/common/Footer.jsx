@@ -14,7 +14,7 @@ const Footer = () => {
         <footer className="footer">
             <div className="footer-content">
                 <div className="footer-section">
-                    <h3 className="footer-title">캠퍼스 페스티벌</h3>
+                    <h3 className="footer-title">FIESTA</h3>
                     <p className="footer-description">
                         전국 대학교 축제 정보를 한눈에 확인하세요.
                     </p>
@@ -58,7 +58,7 @@ const Footer = () => {
 
             <div className="footer-bottom">
                 <p>
-                    &copy; {new Date().getFullYear()} 캠퍼스 페스티벌. All
+                    &copy; {new Date().getFullYear()} FIESTA. All
                     rights reserved.
                 </p>
             </div>

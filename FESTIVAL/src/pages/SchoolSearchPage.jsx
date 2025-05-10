@@ -118,7 +118,8 @@ const SchoolSearchPage = () => {
                             website: school.website || '',
                             logoPath: school.logoPath || '',  // Preserve the logo path from Firebase
                             logoUrl: logoUrl,  // Store fetched URL if successful
-                            logo: school.logo || ''  // Add direct logo URL field from Firebase
+                            logo: school.logo || '',  // Add direct logo URL field from Firebase
+                            poster_url: school.poster_url || '' // Add poster URL field from Firebase
                         };
                     }));
 
@@ -147,7 +148,8 @@ const SchoolSearchPage = () => {
                                         address: festival.university?.address || festival.location?.address || '',
                                         region: region || '지역 정보 없음',
                                         coordinates: festival.location?.coordinates || { latitude: 0, longitude: 0 }
-                                    }
+                                    },
+                                    poster_url: festival.university?.poster_url || ''
                                 });
                             }
                         });
@@ -188,7 +190,8 @@ const SchoolSearchPage = () => {
                                     address: festival.university?.address || festival.location?.address || '',
                                     region: region || '지역 정보 없음',
                                     coordinates: festival.location?.coordinates || { latitude: 0, longitude: 0 }
-                                }
+                                },
+                                poster_url: festival.university?.poster_url || ''
                             });
                         }
                     });

@@ -59,23 +59,91 @@ export const getAllFestivals = async () => {
       const festivalData = festivalDoc.data();
       
       // Get university data
-      const universityRef = doc(db, "universities", festivalData.university_id);
-      const universitySnap = await getDoc(universityRef);
-      
-      // Get artists data
-      const artistsData = [];
-      for (const artistId of festivalData.artist_ids) {
-        const artistRef = doc(db, "artists", artistId);
-        const artistSnap = await getDoc(artistRef);
-        if (artistSnap.exists()) {
-          artistsData.push({ id: artistId, ...artistSnap.data() });
+      let universitySnap = null;
+      // Check if university_id exists and is a valid ID or just a name string
+      if (festivalData.university_id) {
+        // First try to get university by ID
+        const universityRef = doc(db, "universities", festivalData.university_id);
+        universitySnap = await getDoc(universityRef);
+
+        // If not found by ID and it's just a name, create a fallback university object
+        if (!universitySnap.exists()) {
+          // Try to find university by name
+          const universitiesRef = collection(db, "universities");
+          const q = query(universitiesRef, where("name", "==", festivalData.university_id));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            // Found a university with matching name
+            universitySnap = querySnapshot.docs[0];
+          }
         }
       }
       
+      // Get artists data
+      const artistsData = [];
+      // Check if artist_ids is a string (comma-separated) or array
+      const artistIds = Array.isArray(festivalData.artist_ids)
+        ? festivalData.artist_ids
+        : (typeof festivalData.artist_ids === 'string'
+            ? festivalData.artist_ids.split(',').map(id => id.trim())
+            : []);
+
+      // Create artist objects from the list of names if no actual artist docs exist
+      if (artistIds.length > 0) {
+        for (const artistId of artistIds) {
+          // First try to get artist from the database
+          const artistRef = doc(db, "artists", artistId);
+          const artistSnap = await getDoc(artistRef);
+
+          if (artistSnap.exists()) {
+            // If artist exists in database, use that data
+            artistsData.push({ id: artistId, ...artistSnap.data() });
+          } else {
+            // If it's just a name string, create a simple artist object
+            artistsData.push({
+              id: `temp-${artistId}`,
+              name: artistId,
+              description: ''
+            });
+          }
+        }
+      }
+      
+      // Create university object, with fallback to name string if not found in DB
+      let universityObj = null;
+      if (universitySnap && universitySnap.exists()) {
+        const uniData = universitySnap.data();
+        // Get poster_url if needed
+        let posterUrl = '';
+        if (uniData.poster_path && !uniData.poster_url) {
+          try {
+            posterUrl = await getImageUrlWithCacheBusting(uniData.poster_path);
+          } catch (error) {
+            console.warn(`Could not fetch poster for university: ${uniData.name || 'Unknown'}`, error);
+          }
+        }
+        universityObj = {
+          id: universitySnap.id,
+          ...uniData,
+          poster_url: posterUrl || uniData.poster_url || ''
+        };
+      } else if (festivalData.university_id && typeof festivalData.university_id === 'string') {
+        // If university_id is just a string name, create a basic university object
+        universityObj = {
+          id: `temp-${festivalData.university_id}`,
+          name: festivalData.university_id,
+          shortName: festivalData.university_id,
+          location: '위치 정보 없음',
+          address: '주소 정보 없음',
+          poster_url: ''
+        };
+      }
+
       festivals.push({
         id: festivalDoc.id,
         ...festivalData,
-        university: universitySnap.exists() ? { id: universitySnap.id, ...universitySnap.data() } : null,
+        university: universityObj,
         artists: artistsData
       });
     }
@@ -112,10 +180,30 @@ export const getFestivalById = async (festivalId) => {
       }
     }
     
+    // Handle university data with poster URL
+    let universityObj = null;
+    if (universitySnap && universitySnap.exists()) {
+      const uniData = universitySnap.data();
+      // Get poster_url if needed
+      let posterUrl = '';
+      if (uniData.poster_path && !uniData.poster_url) {
+        try {
+          posterUrl = await getImageUrlWithCacheBusting(uniData.poster_path);
+        } catch (error) {
+          console.warn(`Could not fetch poster for university: ${uniData.name || 'Unknown'}`, error);
+        }
+      }
+      universityObj = {
+        id: universitySnap.id,
+        ...uniData,
+        poster_url: posterUrl || uniData.poster_url || ''
+      };
+    }
+
     return {
       id: festivalSnap.id,
       ...festivalData,
-      university: universitySnap.exists() ? { id: universitySnap.id, ...universitySnap.data() } : null,
+      university: universityObj,
       artists: artistsData
     };
   } catch (error) {
@@ -243,23 +331,91 @@ export const getFestivalsByDate = async (date) => {
       }
 
       // Get university data
-      const universityRef = doc(db, "universities", festivalData.university_id);
-      const universitySnap = await getDoc(universityRef);
+      let universitySnap = null;
+      // Check if university_id exists and is a valid ID or just a name string
+      if (festivalData.university_id) {
+        // First try to get university by ID
+        const universityRef = doc(db, "universities", festivalData.university_id);
+        universitySnap = await getDoc(universityRef);
+
+        // If not found by ID and it's just a name, create a fallback university object
+        if (!universitySnap.exists()) {
+          // Try to find university by name
+          const universitiesRef = collection(db, "universities");
+          const q = query(universitiesRef, where("name", "==", festivalData.university_id));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            // Found a university with matching name
+            universitySnap = querySnapshot.docs[0];
+          }
+        }
+      }
 
       // Get artists data
       const artistsData = [];
-      for (const artistId of festivalData.artist_ids) {
-        const artistRef = doc(db, "artists", artistId);
-        const artistSnap = await getDoc(artistRef);
-        if (artistSnap.exists()) {
-          artistsData.push({ id: artistId, ...artistSnap.data() });
+      // Check if artist_ids is a string (comma-separated) or array
+      const artistIds = Array.isArray(festivalData.artist_ids)
+        ? festivalData.artist_ids
+        : (typeof festivalData.artist_ids === 'string'
+            ? festivalData.artist_ids.split(',').map(id => id.trim())
+            : []);
+
+      // Create artist objects from the list of names if no actual artist docs exist
+      if (artistIds.length > 0) {
+        for (const artistId of artistIds) {
+          // First try to get artist from the database
+          const artistRef = doc(db, "artists", artistId);
+          const artistSnap = await getDoc(artistRef);
+
+          if (artistSnap.exists()) {
+            // If artist exists in database, use that data
+            artistsData.push({ id: artistId, ...artistSnap.data() });
+          } else {
+            // If it's just a name string, create a simple artist object
+            artistsData.push({
+              id: `temp-${artistId}`,
+              name: artistId,
+              description: ''
+            });
+          }
         }
+      }
+
+      // Create university object, with fallback to name string if not found in DB
+      let universityObj = null;
+      if (universitySnap && universitySnap.exists()) {
+        const uniData = universitySnap.data();
+        // Get poster_url if needed
+        let posterUrl = '';
+        if (uniData.poster_path && !uniData.poster_url) {
+          try {
+            posterUrl = await getImageUrlWithCacheBusting(uniData.poster_path);
+          } catch (error) {
+            console.warn(`Could not fetch poster for university: ${uniData.name || 'Unknown'}`, error);
+          }
+        }
+        universityObj = {
+          id: universitySnap.id,
+          ...uniData,
+          poster_url: posterUrl || uniData.poster_url || ''
+        };
+      } else if (festivalData.university_id && typeof festivalData.university_id === 'string') {
+        // If university_id is just a string name, create a basic university object
+        universityObj = {
+          id: `temp-${festivalData.university_id}`,
+          name: festivalData.university_id,
+          shortName: festivalData.university_id,
+          location: '위치 정보 없음',
+          address: '주소 정보 없음',
+          poster_url: ''
+        };
       }
 
       festivals.push({
         id: festivalDoc.id,
         ...festivalData,
-        university: universitySnap.exists() ? { id: universitySnap.id, ...universitySnap.data() } : null,
+        university: universityObj,
         artists: artistsData
       });
     }
@@ -413,7 +569,7 @@ export const getAllUniversities = async () => {
 
     console.log(`대학교 데이터 스냅샷 가져옴: ${universitySnapshot.docs.length}개 문서 발견`);
 
-    // Process universities - don't fetch logo URLs, only use text data
+    // Process universities
     const universities = [];
 
     for (const universityDoc of universitySnapshot.docs) {
@@ -421,12 +577,25 @@ export const getAllUniversities = async () => {
         const universityData = universityDoc.data();
         console.log(`대학교 처리 중: ${universityData.name || universityDoc.id}`);
 
+        // Try to get poster_url from storage if poster_path exists
+        let posterUrl = '';
+        if (universityData.poster_path) {
+          try {
+            posterUrl = await getImageUrlWithCacheBusting(universityData.poster_path);
+            console.log(`대학교 ${universityData.name} 포스터 URL 가져옴: ${posterUrl}`);
+          } catch (posterError) {
+            console.error(`대학교 ${universityData.name} 포스터 URL 가져오기 실패:`, posterError);
+          }
+        }
+
         universities.push({
           id: universityDoc.id,
           ...universityData,
           // Preserve logo field from Firebase
           logo: universityData.logo || undefined,
-          logoUrl: undefined
+          logoUrl: undefined,
+          // Include poster_url field
+          poster_url: posterUrl || universityData.poster_url || ''
         });
       } catch (docError) {
         console.error(`대학교 데이터 처리 중 오류 발생 (ID: ${universityDoc.id}):`, docError);
@@ -445,35 +614,40 @@ export const getAllUniversities = async () => {
           name: '서울대학교',
           shortName: '서울대',
           location: '서울특별시',
-          address: '서울특별시 관악구 관악로 1'
+          address: '서울특별시 관악구 관악로 1',
+          poster_url: ''
         },
         {
           id: 'default-yonsei',
           name: '연세대학교',
           shortName: '연세대',
           location: '서울특별시',
-          address: '서울특별시 서대문구 연세로 50'
+          address: '서울특별시 서대문구 연세로 50',
+          poster_url: ''
         },
         {
           id: 'default-korea',
           name: '고려대학교',
           shortName: '고려대',
           location: '서울특별시',
-          address: '서울특별시 성북구 안암로 145'
+          address: '서울특별시 성북구 안암로 145',
+          poster_url: ''
         },
         {
           id: 'default-kaist',
           name: '한국과학기술원',
           shortName: 'KAIST',
           location: '대전광역시',
-          address: '대전광역시 유성구 대학로 291'
+          address: '대전광역시 유성구 대학로 291',
+          poster_url: ''
         },
         {
           id: 'default-suwon',
           name: '수원대학교',
           shortName: '수원대',
           location: '경기도',
-          address: '경기도 화성시 봉담읍 와우안길 17'
+          address: '경기도 화성시 봉담읍 와우안길 17',
+          poster_url: ''
         }
       ];
     }
@@ -490,35 +664,40 @@ export const getAllUniversities = async () => {
         name: '서울대학교',
         shortName: '서울대',
         location: '서울특별시',
-        address: '서울특별시 관악구 관악로 1'
+        address: '서울특별시 관악구 관악로 1',
+        poster_url: ''
       },
       {
         id: 'default-yonsei',
         name: '연세대학교',
         shortName: '연세대',
         location: '서울특별시',
-        address: '서울특별시 서대문구 연세로 50'
+        address: '서울특별시 서대문구 연세로 50',
+        poster_url: ''
       },
       {
         id: 'default-korea',
         name: '고려대학교',
         shortName: '고려대',
         location: '서울특별시',
-        address: '서울특별시 성북구 안암로 145'
+        address: '서울특별시 성북구 안암로 145',
+        poster_url: ''
       },
       {
         id: 'default-kaist',
         name: '한국과학기술원',
         shortName: 'KAIST',
         location: '대전광역시',
-        address: '대전광역시 유성구 대학로 291'
+        address: '대전광역시 유성구 대학로 291',
+        poster_url: ''
       },
       {
         id: 'default-suwon',
         name: '수원대학교',
         shortName: '수원대',
         location: '경기도',
-        address: '경기도 화성시 봉담읍 와우안길 17'
+        address: '경기도 화성시 봉담읍 와우안길 17',
+        poster_url: ''
       }
     ];
   }
@@ -568,18 +747,52 @@ export const searchFestivalsByUniversity = async (universityName) => {
       
       // Get artists data
       const artistsData = [];
-      for (const artistId of festivalData.artist_ids) {
-        const artistRef = doc(db, "artists", artistId);
-        const artistSnap = await getDoc(artistRef);
-        if (artistSnap.exists()) {
-          artistsData.push({ id: artistId, ...artistSnap.data() });
+      // Check if artist_ids is a string (comma-separated) or array
+      const artistIds = Array.isArray(festivalData.artist_ids)
+        ? festivalData.artist_ids
+        : (typeof festivalData.artist_ids === 'string'
+            ? festivalData.artist_ids.split(',').map(id => id.trim())
+            : []);
+
+      // Create artist objects from the list of names if no actual artist docs exist
+      if (artistIds.length > 0) {
+        for (const artistId of artistIds) {
+          // First try to get artist from the database
+          const artistRef = doc(db, "artists", artistId);
+          const artistSnap = await getDoc(artistRef);
+
+          if (artistSnap.exists()) {
+            // If artist exists in database, use that data
+            artistsData.push({ id: artistId, ...artistSnap.data() });
+          } else {
+            // If it's just a name string, create a simple artist object
+            artistsData.push({
+              id: `temp-${artistId}`,
+              name: artistId,
+              description: ''
+            });
+          }
         }
       }
       
+      // Get poster URL for university if needed
+      let posterUrl = '';
+      if (universityData.poster_path && !universityData.poster_url) {
+        try {
+          posterUrl = await getImageUrlWithCacheBusting(universityData.poster_path);
+        } catch (error) {
+          console.warn(`Could not fetch poster for university: ${universityData.name || 'Unknown'}`, error);
+        }
+      }
+
       festivals.push({
         id: festivalDoc.id,
         ...festivalData,
-        university: { id: universitySnapshot.docs[0].id, ...universityData },
+        university: {
+          id: universitySnapshot.docs[0].id,
+          ...universityData,
+          poster_url: posterUrl || universityData.poster_url || ''
+        },
         artists: artistsData
       });
     }
@@ -615,8 +828,26 @@ export const searchFestivalsByArtist = async (artistName) => {
       const festivalData = festivalDoc.data();
       
       // Get university data
-      const universityRef = doc(db, "universities", festivalData.university_id);
-      const universitySnap = await getDoc(universityRef);
+      let universitySnap = null;
+      // Check if university_id exists and is a valid ID or just a name string
+      if (festivalData.university_id) {
+        // First try to get university by ID
+        const universityRef = doc(db, "universities", festivalData.university_id);
+        universitySnap = await getDoc(universityRef);
+
+        // If not found by ID and it's just a name, create a fallback university object
+        if (!universitySnap.exists()) {
+          // Try to find university by name
+          const universitiesRef = collection(db, "universities");
+          const q = query(universitiesRef, where("name", "==", festivalData.university_id));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            // Found a university with matching name
+            universitySnap = querySnapshot.docs[0];
+          }
+        }
+      }
       
       // Get artists data
       const artistsData = [];
@@ -633,10 +864,40 @@ export const searchFestivalsByArtist = async (artistName) => {
         }
       }
       
+      // Create university object, with fallback to name string if not found in DB
+      let universityObj = null;
+      if (universitySnap && universitySnap.exists()) {
+        const uniData = universitySnap.data();
+        // Get poster_url if needed
+        let posterUrl = '';
+        if (uniData.poster_path && !uniData.poster_url) {
+          try {
+            posterUrl = await getImageUrlWithCacheBusting(uniData.poster_path);
+          } catch (error) {
+            console.warn(`Could not fetch poster for university: ${uniData.name || 'Unknown'}`, error);
+          }
+        }
+        universityObj = {
+          id: universitySnap.id,
+          ...uniData,
+          poster_url: posterUrl || uniData.poster_url || ''
+        };
+      } else if (festivalData.university_id && typeof festivalData.university_id === 'string') {
+        // If university_id is just a string name, create a basic university object
+        universityObj = {
+          id: `temp-${festivalData.university_id}`,
+          name: festivalData.university_id,
+          shortName: festivalData.university_id,
+          location: '위치 정보 없음',
+          address: '주소 정보 없음',
+          poster_url: ''
+        };
+      }
+
       festivals.push({
         id: festivalDoc.id,
         ...festivalData,
-        university: universitySnap.exists() ? { id: universitySnap.id, ...universitySnap.data() } : null,
+        university: universityObj,
         artists: artistsData
       });
     }
@@ -685,10 +946,26 @@ export const filterFestivalsByLocation = async (location) => {
           }
         }
         
+        const universityData = universityDoc.data();
+
+        // Get poster URL for university if needed
+        let posterUrl = '';
+        if (universityData.poster_path && !universityData.poster_url) {
+          try {
+            posterUrl = await getImageUrlWithCacheBusting(universityData.poster_path);
+          } catch (error) {
+            console.warn(`Could not fetch poster for university: ${universityData.name || 'Unknown'}`, error);
+          }
+        }
+
         festivals.push({
           id: festivalDoc.id,
           ...festivalData,
-          university: { id: universityDoc.id, ...universityDoc.data() },
+          university: {
+            id: universityDoc.id,
+            ...universityData,
+            poster_url: posterUrl || universityData.poster_url || ''
+          },
           artists: artistsData
         });
       }

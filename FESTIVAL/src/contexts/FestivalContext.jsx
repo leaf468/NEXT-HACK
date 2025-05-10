@@ -76,6 +76,27 @@ export const FestivalProvider = ({ children }) => {
             // 날짜 필터를 마지막에 적용
             if (filters.date && (filters.date.startDate || filters.date.endDate)) {
                 console.log("Applying date filter:", filters.date);
+
+                // 날짜 필터링 전에 유효성 검사 및 로깅
+                if (typeof filters.date === 'string') {
+                    console.log("Date filter is string:", filters.date);
+                } else if (typeof filters.date === 'object') {
+                    if (filters.date.startDate) {
+                        console.log("Start date:", filters.date.startDate);
+                        // 한국어 날짜 확인 가능
+                        if (filters.date.startDate.includes('년')) {
+                            console.log("Korean date format detected in startDate");
+                        }
+                    }
+                    if (filters.date.endDate) {
+                        console.log("End date:", filters.date.endDate);
+                        // 한국어 날짜 확인 가능
+                        if (filters.date.endDate.includes('년')) {
+                            console.log("Korean date format detected in endDate");
+                        }
+                    }
+                }
+
                 results = await searchFestivalsByDate(filters.date, results);
                 console.log("After date filter:", results.length);
             }

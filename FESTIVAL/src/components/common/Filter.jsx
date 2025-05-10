@@ -12,13 +12,36 @@ const Filter = ({
     artist,
     region,
 }) => {
+    // 한국어 날짜 형식을 ISO 형식으로 변환 (yyyy년 MM월 dd일 -> YYYY-MM-DD)
+    const convertKoreanDateToISO = (koreanDate) => {
+        if (!koreanDate || typeof koreanDate !== "string") return null;
+
+        // "2025년 5월 16일" 형식 확인
+        const koreanPattern = /(\d{4})년\s+(\d{1,2})월\s+(\d{1,2})일/;
+        const match = koreanDate.match(koreanPattern);
+
+        if (match) {
+            const year = match[1];
+            // 한 자리 월/일을 두 자리로 변환 (1 -> 01)
+            const month = match[2].padStart(2, '0');
+            const day = match[3].padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        return koreanDate; // 변환할 수 없는 경우 원본 반환
+    };
+
     // 초기 날짜 상태 설정 (객체 형태로 명확히 구성)
     const [localDate, setLocalDate] = useState(() => {
         if (!date) return { startDate: "", endDate: "" };
-        if (typeof date === 'string') return { startDate: date, endDate: date };
+        if (typeof date === 'string') {
+            // 한국어 날짜 형식인지 확인하고 변환
+            const isoDate = convertKoreanDateToISO(date);
+            return { startDate: isoDate || date, endDate: isoDate || date };
+        }
         return {
-            startDate: date.startDate || "",
-            endDate: date.endDate || ""
+            startDate: date.startDate ? convertKoreanDateToISO(date.startDate) || date.startDate : "",
+            endDate: date.endDate ? convertKoreanDateToISO(date.endDate) || date.endDate : ""
         };
     });
 
@@ -33,16 +56,23 @@ const Filter = ({
         if (date) {
             let newDate;
             if (typeof date === 'string') {
-                newDate = { startDate: date, endDate: date };
+                // 한국어 날짜 형식을 ISO 형식으로 변환
+                const isoDate = convertKoreanDateToISO(date);
+                newDate = {
+                    startDate: isoDate || date,
+                    endDate: isoDate || date
+                };
             } else {
                 newDate = {
-                    startDate: date.startDate || "",
-                    endDate: date.endDate || ""
+                    startDate: date.startDate ? convertKoreanDateToISO(date.startDate) || date.startDate : "",
+                    endDate: date.endDate ? convertKoreanDateToISO(date.endDate) || date.endDate : ""
                 };
             }
 
             // 이전 값과 동일한지 확인하여 불필요한 상태 업데이트 방지
-            if (JSON.stringify(newDate) !== JSON.stringify(localDate)) {
+            const currentDateJSON = JSON.stringify(localDate);
+            const newDateJSON = JSON.stringify(newDate);
+            if (newDateJSON !== currentDateJSON) {
                 console.log("Updating localDate state:", newDate);
                 setLocalDate(newDate);
             }
@@ -54,6 +84,7 @@ const Filter = ({
         if (school !== localSchool) setLocalSchool(school || "");
         if (artist !== localArtist) setLocalArtist(artist || "");
         if (region !== localRegion) setLocalRegion(region || "");
+    // Remove localDate from dependency array to prevent infinite loop
     }, [date, school, artist, region]);
 
     // 지역 선택 옵션
@@ -165,11 +196,13 @@ const Filter = ({
                                         value={localDate.startDate || ""}
                                         onChange={(e) => {
                                             const newStartDate = e.target.value;
+                                            // 한국어 날짜 형식 처리 (만약 있다면)
+                                            const processedStartDate = convertKoreanDateToISO(newStartDate) || newStartDate;
                                             setLocalDate({
                                                 ...localDate,
-                                                startDate: newStartDate,
+                                                startDate: processedStartDate,
                                                 // If end date is empty or before start date, set it to start date
-                                                endDate: !localDate.endDate || newStartDate > localDate.endDate ? newStartDate : localDate.endDate
+                                                endDate: !localDate.endDate || processedStartDate > localDate.endDate ? processedStartDate : localDate.endDate
                                             });
                                         }}
                                     />
@@ -188,9 +221,11 @@ const Filter = ({
                                         min={localDate.startDate || ""}
                                         onChange={(e) => {
                                             const newEndDate = e.target.value;
+                                            // 한국어 날짜 형식 처리 (만약 있다면)
+                                            const processedEndDate = convertKoreanDateToISO(newEndDate) || newEndDate;
                                             setLocalDate({
                                                 ...localDate,
-                                                endDate: newEndDate
+                                                endDate: processedEndDate
                                             });
                                         }}
                                     />

@@ -128,7 +128,7 @@ const HomePage = () => {
         <div className="home-page">
             <section className="hero-section">
                 <div className="hero-content">
-                    <h1>캠퍼스 페스티벌</h1>
+                    <h1>FIESTA</h1>
                     <p>전국 대학교 축제 정보를 한눈에 확인하세요</p>
 
                     <div className="search-container">

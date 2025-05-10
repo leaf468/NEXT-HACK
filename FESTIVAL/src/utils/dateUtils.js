@@ -1,6 +1,35 @@
 import { format, isWithinInterval, parseISO } from "date-fns";
 import { ko } from "date-fns/locale";
 
+// 한국어 날짜 형식을 ISO 형식으로 변환
+const convertKoreanDateToISO = (koreanDate) => {
+    if (!koreanDate || typeof koreanDate !== "string") return null;
+
+    // 이미 ISO 형식인지 확인 (YYYY-MM-DD)
+    const isoPattern = /^\d{4}-\d{2}-\d{2}$/;
+    if (isoPattern.test(koreanDate)) {
+        return koreanDate; // 이미 ISO 형식이면 그대로 반환
+    }
+
+    // "2025년 5월 16일" 형식 확인 (공백이 여러 개 있을 수 있음)
+    const koreanPattern = /(\d{4})년\s+(\d{1,2})월\s+(\d{1,2})일/;
+    const match = koreanDate.match(koreanPattern);
+
+    if (match) {
+        const year = match[1];
+        // 한 자리 월/일을 두 자리로 변환 (1 -> 01)
+        const month = match[2].padStart(2, '0');
+        const day = match[3].padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    // 다른 날짜 형식도 시도 (추가 가능)
+
+    // 변환할 수 없는 경우
+    console.log("변환할 수 없는 날짜 형식:", koreanDate);
+    return null;
+};
+
 // 날짜 포맷팅 (Timestamp 또는 YYYY-MM-DD -> YYYY년 MM월 DD일)
 export const formatDate = (dateValue) => {
     if (!dateValue) return "날짜 정보 없음";
@@ -17,7 +46,13 @@ export const formatDate = (dateValue) => {
         }
         // 문자열인 경우
         else if (typeof dateValue === "string") {
-            date = parseISO(dateValue);
+            // 한국어 날짜 형식인지 확인 및 변환
+            const isoDate = convertKoreanDateToISO(dateValue);
+            if (isoDate) {
+                date = parseISO(isoDate);
+            } else {
+                date = parseISO(dateValue);
+            }
         }
         // 그 외의 경우
         else {
@@ -109,7 +144,13 @@ export const isDateInRange = (
         // 축제 시작 날짜 변환
         let fStart;
         if (typeof festivalStart === "string") {
-            fStart = parseISO(festivalStart);
+            // 한국어 날짜 형식인지 확인
+            const isoDate = convertKoreanDateToISO(festivalStart);
+            if (isoDate) {
+                fStart = parseISO(isoDate);
+            } else {
+                fStart = parseISO(festivalStart);
+            }
         } else if (festivalStart && typeof festivalStart.toDate === 'function') {
             fStart = festivalStart.toDate();
         } else if (festivalStart instanceof Date) {
@@ -124,7 +165,13 @@ export const isDateInRange = (
         if (!festivalEnd) {
             fEnd = new Date(fStart);
         } else if (typeof festivalEnd === "string") {
-            fEnd = parseISO(festivalEnd);
+            // 한국어 날짜 형식인지 확인
+            const isoDate = convertKoreanDateToISO(festivalEnd);
+            if (isoDate) {
+                fEnd = parseISO(isoDate);
+            } else {
+                fEnd = parseISO(festivalEnd);
+            }
         } else if (festivalEnd && typeof festivalEnd.toDate === 'function') {
             fEnd = festivalEnd.toDate();
         } else if (festivalEnd instanceof Date) {
@@ -145,8 +192,15 @@ export const isDateInRange = (
 
         // 필터 날짜 처리
         if (typeof filterDate === "string") {
+            // 한국어 날짜 형식 확인
+            let singleDateStr = filterDate;
+            const isoDate = convertKoreanDateToISO(filterDate);
+            if (isoDate) {
+                singleDateStr = isoDate;
+            }
+
             // 단일 날짜 필터링
-            const singleDate = parseISO(filterDate);
+            const singleDate = parseISO(singleDateStr);
             const endOfDay = new Date(singleDate);
 
             singleDate.setHours(0, 0, 0, 0);
@@ -166,7 +220,14 @@ export const isDateInRange = (
 
         // 필터에 날짜 범위가 있는 경우
         if (filterDate.startDate) {
-            const filterStartDate = parseISO(filterDate.startDate);
+            // 한국어 날짜 형식 확인 (시작일)
+            let startDateStr = filterDate.startDate;
+            const isoStartDate = convertKoreanDateToISO(filterDate.startDate);
+            if (isoStartDate) {
+                startDateStr = isoStartDate;
+            }
+
+            const filterStartDate = parseISO(startDateStr);
             filterStartDate.setHours(0, 0, 0, 0);
 
             // 시작일만 있고 종료일이 없거나 같은 경우 (단일 날짜 선택)
@@ -179,8 +240,15 @@ export const isDateInRange = (
                 );
             }
 
+            // 한국어 날짜 형식 확인 (종료일)
+            let endDateStr = filterDate.endDate;
+            const isoEndDate = convertKoreanDateToISO(filterDate.endDate);
+            if (isoEndDate) {
+                endDateStr = isoEndDate;
+            }
+
             // 날짜 범위 필터링
-            const filterEndDate = parseISO(filterDate.endDate);
+            const filterEndDate = parseISO(endDateStr);
             filterEndDate.setHours(23, 59, 59, 999); // 종료일은 하루의 끝으로 설정
 
             // 유효하지 않은 날짜인 경우 모든 축제 포함
@@ -218,11 +286,23 @@ export const getDaysRemaining = (targetDate) => {
         }
         // 문자열인 경우
         else if (typeof targetDate === "string") {
-            target = parseISO(targetDate);
+            // 한국어 날짜 형식인지 확인
+            const isoDate = convertKoreanDateToISO(targetDate);
+            if (isoDate) {
+                target = parseISO(isoDate);
+            } else {
+                target = parseISO(targetDate);
+            }
         }
         // Date 객체인 경우
         else {
             target = targetDate;
+        }
+
+        // 유효한 날짜인지 확인
+        if (isNaN(target.getTime())) {
+            console.warn("유효하지 않은 날짜 (getDaysRemaining):", targetDate);
+            return null;
         }
 
         const today = new Date();
@@ -251,7 +331,13 @@ export const getFestivalStatus = (startDate, endDate) => {
         }
         // 문자열인 경우
         else if (typeof startDate === "string") {
-            start = parseISO(startDate);
+            // 한국어 날짜 형식인지 확인
+            const isoDate = convertKoreanDateToISO(startDate);
+            if (isoDate) {
+                start = parseISO(isoDate);
+            } else {
+                start = parseISO(startDate);
+            }
         }
         // Date 객체인 경우
         else {
@@ -265,11 +351,23 @@ export const getFestivalStatus = (startDate, endDate) => {
         }
         // 문자열인 경우
         else if (typeof endDate === "string") {
-            end = parseISO(endDate);
+            // 한국어 날짜 형식인지 확인
+            const isoDate = convertKoreanDateToISO(endDate);
+            if (isoDate) {
+                end = parseISO(isoDate);
+            } else {
+                end = parseISO(endDate);
+            }
         }
         // Date 객체인 경우
         else {
             end = endDate;
+        }
+
+        // 유효한 날짜인지 확인
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            console.warn("유효하지 않은 날짜 (getFestivalStatus):", { startDate, endDate });
+            return { status: "unknown", label: "정보 없음" };
         }
 
         const today = new Date();
