@@ -43,10 +43,10 @@ const FestivalCard = ({ festival }) => {
             </div>
 
             <div className="festival-image">
-                {festival.imageUrl || festival.image ? (
+                {festival.imageUrl || festival.image || (festival.university && festival.university.posterUrl) || (festival.university && festival.university.logo) ? (
                     <img
-                        src={festival.imageUrl || festival.image}
-                        alt={`${getUniversityName()} ${festival.name} 포스터`}
+                        src={festival.imageUrl || festival.image || (festival.university && festival.university.posterUrl) || (festival.university && festival.university.logo)}
+                        alt={`${getUniversityName()} ${festival.festival_name || festival.name} 포스터`}
                     />
                 ) : (
                     <div className="placeholder-image">
@@ -57,7 +57,7 @@ const FestivalCard = ({ festival }) => {
 
             <div className="festival-content">
                 <div className="festival-header">
-                    <h2 className="festival-name">{festival.name}</h2>
+                    <h2 className="festival-name">{festival.festival_name || festival.name}</h2>
                     <button
                         className={`favorite-button ${
                             isFavorite(festival.id) ? "active" : ""

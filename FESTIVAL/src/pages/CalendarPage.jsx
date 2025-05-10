@@ -26,8 +26,22 @@ function CalendarPage() {
             }
             // 문자열인 경우
             else if (typeof dateValue === "string") {
-                // ISO 형식 문자열로 가정하고 파싱
-                return parseISO(dateValue);
+                // 한국어 형식 (YYYY년 MM월 DD일)인지 확인
+                const koreanPattern = /(\d{4})년\s+(\d{1,2})월\s+(\d{1,2})일/;
+                const match = dateValue.match(koreanPattern);
+
+                if (match) {
+                    // 한국어 형식을 ISO 형식으로 변환 (YYYY-MM-DD)
+                    const year = match[1];
+                    const month = match[2].padStart(2, '0');
+                    const day = match[3].padStart(2, '0');
+                    const isoDateStr = `${year}-${month}-${day}`;
+                    console.log(`Converting Korean date: ${dateValue} => ${isoDateStr}`);
+                    return parseISO(isoDateStr);
+                } else {
+                    // ISO 형식 문자열로 가정하고 파싱
+                    return parseISO(dateValue);
+                }
             }
             // 이미 Date 객체인 경우
             else if (dateValue instanceof Date) {
@@ -79,10 +93,12 @@ function CalendarPage() {
                         : normalizeDateObject(festival.date);
 
                 if (isValidDate(festivalDate)) {
-                    return (
-                        format(festivalDate, "yyyy-MM-dd") ===
-                        format(targetDate, "yyyy-MM-dd")
-                    );
+                    // Convert both dates to the same format for accurate comparison
+                    const festivalDateStr = format(festivalDate, "yyyy-MM-dd");
+                    const targetDateStr = format(targetDate, "yyyy-MM-dd");
+                    const isMatch = festivalDateStr === targetDateStr;
+                    console.log(`Date comparison: ${festivalDateStr} === ${targetDateStr}, result: ${isMatch}`);
+                    return isMatch;
                 }
             } catch (error) {
                 console.error("date 필드 비교 중 오류:", error);
@@ -261,15 +277,15 @@ function CalendarPage() {
         setValue(date);
         setSelectedDate(date);
 
-        // 선택한 날짜 형식 변환
+        // 선택한 날짜 형식 변환 (항상 yyyy-MM-dd 형식으로 통일)
         const dateStr = format(date, "yyyy-MM-dd");
         console.log("Selected date:", dateStr, "Date object:", date);
 
         try {
             setIsLoading(true);
 
-            // Firebase에서 선택한 날짜의 축제 정보 가져오기
-            console.log("Fetching festivals for date:", dateStr);
+            // 표준화된 날짜 문자열로 Firebase에서 축제 정보 가져오기
+            console.log("Fetching festivals for standardized date:", dateStr);
             const dateSpecificFestivals = await getFestivalsByDate(dateStr);
             console.log(
                 "Fetched festivals count:",
@@ -281,9 +297,11 @@ function CalendarPage() {
                 console.log("Firebase 데이터 없음, 로컬 필터링 사용");
 
                 // 메모리에 있는 festivals 데이터를 기반으로 필터링
-                const filteredFestivals = festivals.filter((festival) =>
-                    isFestivalActiveOnDate(festival, date)
-                );
+                const filteredFestivals = festivals.filter((festival) => {
+                    const isActive = isFestivalActiveOnDate(festival, date);
+                    console.log(`Festival ${festival.name || 'Unknown'} active on ${dateStr}: ${isActive}`);
+                    return isActive;
+                });
 
                 console.log("로컬 필터링 결과:", filteredFestivals.length);
                 setSelectedDateFestivals(filteredFestivals);
@@ -296,9 +314,11 @@ function CalendarPage() {
 
             // 오류 발생 시 로컬 필터링 사용
             console.log("오류로 인해 로컬 필터링 사용");
-            const filteredFestivals = festivals.filter((festival) =>
-                isFestivalActiveOnDate(festival, date)
-            );
+            const filteredFestivals = festivals.filter((festival) => {
+                const isActive = isFestivalActiveOnDate(festival, date);
+                console.log(`Festival ${festival.name || 'Unknown'} active on ${dateStr}: ${isActive}`);
+                return isActive;
+            });
 
             setSelectedDateFestivals(filteredFestivals);
         } finally {

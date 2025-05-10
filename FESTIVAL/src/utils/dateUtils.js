@@ -6,9 +6,16 @@ const convertKoreanDateToISO = (koreanDate) => {
     if (!koreanDate || typeof koreanDate !== "string") return null;
 
     // 이미 ISO 형식인지 확인 (YYYY-MM-DD)
-    const isoPattern = /^\d{4}-\d{2}-\d{2}$/;
+    const isoPattern = /^\d{4}-\d{1,2}-\d{1,2}$/;
     if (isoPattern.test(koreanDate)) {
-        return koreanDate; // 이미 ISO 형식이면 그대로 반환
+        // ISO 형식이지만 월과 일이 한 자리인 경우도 처리
+        const [year, month, day] = koreanDate.split('-');
+        const formattedMonth = month.padStart(2, '0');
+        const formattedDay = day.padStart(2, '0');
+        const formattedDate = `${year}-${formattedMonth}-${formattedDay}`;
+
+        console.log(`ISO 형식 정규화: ${koreanDate} => ${formattedDate}`);
+        return formattedDate;
     }
 
     // "2025년 5월 16일" 형식 확인 (공백이 여러 개 있을 수 있음)
@@ -20,10 +27,25 @@ const convertKoreanDateToISO = (koreanDate) => {
         // 한 자리 월/일을 두 자리로 변환 (1 -> 01)
         const month = match[2].padStart(2, '0');
         const day = match[3].padStart(2, '0');
-        return `${year}-${month}-${day}`;
+        const formattedDate = `${year}-${month}-${day}`;
+
+        console.log(`한국어 형식 변환: ${koreanDate} => ${formattedDate}`);
+        return formattedDate;
     }
 
-    // 다른 날짜 형식도 시도 (추가 가능)
+    // 공백이 없는 한국어 형식도 처리 "2025년5월16일"
+    const noSpacePattern = /(\d{4})년(\d{1,2})월(\d{1,2})일/;
+    const noSpaceMatch = koreanDate.match(noSpacePattern);
+
+    if (noSpaceMatch) {
+        const year = noSpaceMatch[1];
+        const month = noSpaceMatch[2].padStart(2, '0');
+        const day = noSpaceMatch[3].padStart(2, '0');
+        const formattedDate = `${year}-${month}-${day}`;
+
+        console.log(`공백 없는 한국어 형식 변환: ${koreanDate} => ${formattedDate}`);
+        return formattedDate;
+    }
 
     // 변환할 수 없는 경우
     console.log("변환할 수 없는 날짜 형식:", koreanDate);

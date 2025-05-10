@@ -114,9 +114,9 @@ export const getAllFestivals = async () => {
       let universityObj = null;
       if (universitySnap && universitySnap.exists()) {
         const uniData = universitySnap.data();
-        // Get poster_url if needed
+        // Get posterUrl if needed
         let posterUrl = '';
-        if (uniData.poster_path && !uniData.poster_url) {
+        if (uniData.poster_path && !uniData.posterUrl) {
           try {
             posterUrl = await getImageUrlWithCacheBusting(uniData.poster_path);
           } catch (error) {
@@ -126,7 +126,7 @@ export const getAllFestivals = async () => {
         universityObj = {
           id: universitySnap.id,
           ...uniData,
-          poster_url: posterUrl || uniData.poster_url || ''
+          posterUrl: posterUrl || uniData.posterUrl || ''
         };
       } else if (festivalData.university_id && typeof festivalData.university_id === 'string') {
         // If university_id is just a string name, create a basic university object
@@ -136,7 +136,7 @@ export const getAllFestivals = async () => {
           shortName: festivalData.university_id,
           location: '위치 정보 없음',
           address: '주소 정보 없음',
-          poster_url: ''
+          posterUrl: ''
         };
       }
 
@@ -184,9 +184,9 @@ export const getFestivalById = async (festivalId) => {
     let universityObj = null;
     if (universitySnap && universitySnap.exists()) {
       const uniData = universitySnap.data();
-      // Get poster_url if needed
+      // Get posterUrl if needed
       let posterUrl = '';
-      if (uniData.poster_path && !uniData.poster_url) {
+      if (uniData.poster_path && !uniData.posterUrl) {
         try {
           posterUrl = await getImageUrlWithCacheBusting(uniData.poster_path);
         } catch (error) {
@@ -196,7 +196,7 @@ export const getFestivalById = async (festivalId) => {
       universityObj = {
         id: universitySnap.id,
         ...uniData,
-        poster_url: posterUrl || uniData.poster_url || ''
+        posterUrl: posterUrl || uniData.posterUrl || ''
       };
     }
 
@@ -308,9 +308,23 @@ export const getFestivalsByDate = async (date) => {
       else if (festivalData.date) {
         // date 필드 형식이 문자열인지 확인 후 비교
         if (typeof festivalData.date === 'string') {
-          // YYYY-MM-DD 형식의 날짜 비교
-          isInDateRange = festivalData.date === date;
-          console.log(`Legacy date check (string comparison): ${festivalData.date} === ${date}, result: ${isInDateRange}`);
+          // 한국어 형식 (YYYY년 MM월 DD일)인지 확인
+          const koreanPattern = /(\d{4})년\s+(\d{1,2})월\s+(\d{1,2})일/;
+          const match = festivalData.date.match(koreanPattern);
+
+          if (match) {
+            // 한국어 형식을 ISO 형식으로 변환 (YYYY-MM-DD)
+            const year = match[1];
+            const month = match[2].padStart(2, '0');
+            const day = match[3].padStart(2, '0');
+            const festivalDateIso = `${year}-${month}-${day}`;
+            isInDateRange = festivalDateIso === date;
+            console.log(`Legacy date check (Korean format): ${festivalData.date} => ${festivalDateIso} === ${date}, result: ${isInDateRange}`);
+          } else {
+            // 일반 문자열 비교 (YYYY-MM-DD 형식 가정)
+            isInDateRange = festivalData.date === date;
+            console.log(`Legacy date check (string comparison): ${festivalData.date} === ${date}, result: ${isInDateRange}`);
+          }
         } else if (festivalData.date instanceof Date) {
           // Date 객체인 경우 날짜만 비교
           const festivalDateStr = festivalData.date.toISOString().split('T')[0];
@@ -386,9 +400,9 @@ export const getFestivalsByDate = async (date) => {
       let universityObj = null;
       if (universitySnap && universitySnap.exists()) {
         const uniData = universitySnap.data();
-        // Get poster_url if needed
+        // Get posterUrl if needed
         let posterUrl = '';
-        if (uniData.poster_path && !uniData.poster_url) {
+        if (uniData.poster_path && !uniData.posterUrl) {
           try {
             posterUrl = await getImageUrlWithCacheBusting(uniData.poster_path);
           } catch (error) {
@@ -398,7 +412,7 @@ export const getFestivalsByDate = async (date) => {
         universityObj = {
           id: universitySnap.id,
           ...uniData,
-          poster_url: posterUrl || uniData.poster_url || ''
+          posterUrl: posterUrl || uniData.posterUrl || ''
         };
       } else if (festivalData.university_id && typeof festivalData.university_id === 'string') {
         // If university_id is just a string name, create a basic university object
@@ -408,7 +422,7 @@ export const getFestivalsByDate = async (date) => {
           shortName: festivalData.university_id,
           location: '위치 정보 없음',
           address: '주소 정보 없음',
-          poster_url: ''
+          posterUrl: ''
         };
       }
 
@@ -577,7 +591,7 @@ export const getAllUniversities = async () => {
         const universityData = universityDoc.data();
         console.log(`대학교 처리 중: ${universityData.name || universityDoc.id}`);
 
-        // Try to get poster_url from storage if poster_path exists
+        // Try to get posterUrl from storage if poster_path exists
         let posterUrl = '';
         if (universityData.poster_path) {
           try {
@@ -594,8 +608,8 @@ export const getAllUniversities = async () => {
           // Preserve logo field from Firebase
           logo: universityData.logo || undefined,
           logoUrl: undefined,
-          // Include poster_url field
-          poster_url: posterUrl || universityData.poster_url || ''
+          // Include posterUrl field
+          posterUrl: posterUrl || universityData.posterUrl || ''
         });
       } catch (docError) {
         console.error(`대학교 데이터 처리 중 오류 발생 (ID: ${universityDoc.id}):`, docError);
@@ -615,7 +629,7 @@ export const getAllUniversities = async () => {
           shortName: '서울대',
           location: '서울특별시',
           address: '서울특별시 관악구 관악로 1',
-          poster_url: ''
+          posterUrl: ''
         },
         {
           id: 'default-yonsei',
@@ -623,7 +637,7 @@ export const getAllUniversities = async () => {
           shortName: '연세대',
           location: '서울특별시',
           address: '서울특별시 서대문구 연세로 50',
-          poster_url: ''
+          posterUrl: ''
         },
         {
           id: 'default-korea',
@@ -631,7 +645,7 @@ export const getAllUniversities = async () => {
           shortName: '고려대',
           location: '서울특별시',
           address: '서울특별시 성북구 안암로 145',
-          poster_url: ''
+          posterUrl: ''
         },
         {
           id: 'default-kaist',
@@ -639,7 +653,7 @@ export const getAllUniversities = async () => {
           shortName: 'KAIST',
           location: '대전광역시',
           address: '대전광역시 유성구 대학로 291',
-          poster_url: ''
+          posterUrl: ''
         },
         {
           id: 'default-suwon',
@@ -647,7 +661,7 @@ export const getAllUniversities = async () => {
           shortName: '수원대',
           location: '경기도',
           address: '경기도 화성시 봉담읍 와우안길 17',
-          poster_url: ''
+          posterUrl: ''
         }
       ];
     }
@@ -665,7 +679,7 @@ export const getAllUniversities = async () => {
         shortName: '서울대',
         location: '서울특별시',
         address: '서울특별시 관악구 관악로 1',
-        poster_url: ''
+        posterUrl: ''
       },
       {
         id: 'default-yonsei',
@@ -673,7 +687,7 @@ export const getAllUniversities = async () => {
         shortName: '연세대',
         location: '서울특별시',
         address: '서울특별시 서대문구 연세로 50',
-        poster_url: ''
+        posterUrl: ''
       },
       {
         id: 'default-korea',
@@ -681,7 +695,7 @@ export const getAllUniversities = async () => {
         shortName: '고려대',
         location: '서울특별시',
         address: '서울특별시 성북구 안암로 145',
-        poster_url: ''
+        posterUrl: ''
       },
       {
         id: 'default-kaist',
@@ -689,7 +703,7 @@ export const getAllUniversities = async () => {
         shortName: 'KAIST',
         location: '대전광역시',
         address: '대전광역시 유성구 대학로 291',
-        poster_url: ''
+        posterUrl: ''
       },
       {
         id: 'default-suwon',
@@ -697,7 +711,7 @@ export const getAllUniversities = async () => {
         shortName: '수원대',
         location: '경기도',
         address: '경기도 화성시 봉담읍 와우안길 17',
-        poster_url: ''
+        posterUrl: ''
       }
     ];
   }
@@ -777,7 +791,7 @@ export const searchFestivalsByUniversity = async (universityName) => {
       
       // Get poster URL for university if needed
       let posterUrl = '';
-      if (universityData.poster_path && !universityData.poster_url) {
+      if (universityData.poster_path && !universityData.posterUrl) {
         try {
           posterUrl = await getImageUrlWithCacheBusting(universityData.poster_path);
         } catch (error) {
@@ -791,7 +805,7 @@ export const searchFestivalsByUniversity = async (universityName) => {
         university: {
           id: universitySnapshot.docs[0].id,
           ...universityData,
-          poster_url: posterUrl || universityData.poster_url || ''
+          posterUrl: posterUrl || universityData.posterUrl || ''
         },
         artists: artistsData
       });
@@ -868,9 +882,9 @@ export const searchFestivalsByArtist = async (artistName) => {
       let universityObj = null;
       if (universitySnap && universitySnap.exists()) {
         const uniData = universitySnap.data();
-        // Get poster_url if needed
+        // Get posterUrl if needed
         let posterUrl = '';
-        if (uniData.poster_path && !uniData.poster_url) {
+        if (uniData.poster_path && !uniData.posterUrl) {
           try {
             posterUrl = await getImageUrlWithCacheBusting(uniData.poster_path);
           } catch (error) {
@@ -880,7 +894,7 @@ export const searchFestivalsByArtist = async (artistName) => {
         universityObj = {
           id: universitySnap.id,
           ...uniData,
-          poster_url: posterUrl || uniData.poster_url || ''
+          posterUrl: posterUrl || uniData.posterUrl || ''
         };
       } else if (festivalData.university_id && typeof festivalData.university_id === 'string') {
         // If university_id is just a string name, create a basic university object
@@ -890,7 +904,7 @@ export const searchFestivalsByArtist = async (artistName) => {
           shortName: festivalData.university_id,
           location: '위치 정보 없음',
           address: '주소 정보 없음',
-          poster_url: ''
+          posterUrl: ''
         };
       }
 
@@ -950,7 +964,7 @@ export const filterFestivalsByLocation = async (location) => {
 
         // Get poster URL for university if needed
         let posterUrl = '';
-        if (universityData.poster_path && !universityData.poster_url) {
+        if (universityData.poster_path && !universityData.posterUrl) {
           try {
             posterUrl = await getImageUrlWithCacheBusting(universityData.poster_path);
           } catch (error) {
@@ -964,7 +978,7 @@ export const filterFestivalsByLocation = async (location) => {
           university: {
             id: universityDoc.id,
             ...universityData,
-            poster_url: posterUrl || universityData.poster_url || ''
+            posterUrl: posterUrl || universityData.posterUrl || ''
           },
           artists: artistsData
         });

@@ -65,7 +65,7 @@ class Festival {
     }
 
     this.time = data.time || '';
-    this.imageUrl = data.imageUrl || data.image || '';
+    this.imageUrl = data.imageUrl || data.image || (data.university && data.university.posterUrl) || '';
     this.location = data.location || {
       address: '',
       coordinates: {
@@ -74,6 +74,7 @@ class Festival {
       },
       region: ''
     };
+    this.university = data.university || null;
     this.ticketInfo = data.ticketInfo || '';
     this.ticketLink = data.ticketLink || null;
     this.createdAt = data.createdAt || new Date().toISOString();

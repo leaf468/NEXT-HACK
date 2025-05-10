@@ -5,9 +5,9 @@ const ArtistCard = ({ artist, festivalCount, onClick }) => {
     return (
         <div className="artist-card" onClick={() => onClick(artist.name)}>
             <div className="artist-image-container">
-                {artist.poster_url || artist.image || artist.imageUrl ? (
+                {artist.posterUrl || artist.image || artist.imageUrl ? (
                     <img
-                        src={`${artist.poster_url || artist.image || artist.imageUrl}${(artist.poster_url || artist.image || artist.imageUrl).includes('?') ? '&' : '?'}t=${Date.now()}`}
+                        src={`${artist.posterUrl || artist.image || artist.imageUrl}${(artist.posterUrl || artist.image || artist.imageUrl).includes('?') ? '&' : '?'}t=${Date.now()}`}
                         alt={artist.name}
                         className="artist-image"
                         onError={(e) => {
@@ -17,7 +17,7 @@ const ArtistCard = ({ artist, festivalCount, onClick }) => {
                         }}
                     />
                 ) : null}
-                <div className="artist-placeholder" style={{ display: (artist.poster_url || artist.image || artist.imageUrl) ? 'none' : 'block' }}>
+                <div className="artist-placeholder" style={{ display: (artist.posterUrl || artist.image || artist.imageUrl) ? 'none' : 'block' }}>
                     <span>{artist.name.charAt(0)}</span>
                 </div>
             </div>

@@ -50,14 +50,14 @@ const FestivalDetail = ({ festival }) => {
             removeFromFavorites(festival.id);
             displayNotification(
                 "즐겨찾기 삭제",
-                `${getUniversityName()} ${festival.name}이(가) 즐겨찾기에서 삭제되었습니다.`,
+                `${getUniversityName()} ${festival.festival_name || festival.name}이(가) 즐겨찾기에서 삭제되었습니다.`,
                 "info"
             );
         } else {
             addToFavorites(festival.id);
             displayNotification(
                 "즐겨찾기 추가",
-                `${getUniversityName()} ${festival.name}이(가) 즐겨찾기에 추가되었습니다.`,
+                `${getUniversityName()} ${festival.festival_name || festival.name}이(가) 즐겨찾기에 추가되었습니다.`,
                 "success"
             );
         }
@@ -112,7 +112,7 @@ const FestivalDetail = ({ festival }) => {
         <div className="festival-detail-page">
             <div className="festival-detail-header">
                 <div className="festival-title-section">
-                    <h1 className="festival-detail-name">{festival.name}</h1>
+                    <h1 className="festival-detail-name">{festival.festival_name || festival.name}</h1>
                     <h2 className="festival-detail-school">
                         {getUniversityName()}
                     </h2>
@@ -151,11 +151,11 @@ const FestivalDetail = ({ festival }) => {
                 </div>
 
                 <div className="festival-image-container">
-                    {festival.imageUrl || festival.image ? (
+                    {festival.imageUrl || festival.image || (festival.university && festival.university.posterUrl) || (festival.university && festival.university.logo) ? (
                         <div className="festival-image-wrapper">
                             <img
-                                src={festival.imageUrl || festival.image}
-                                alt={`${getUniversityName()} ${festival.name} 포스터`}
+                                src={festival.imageUrl || festival.image || (festival.university && festival.university.posterUrl) || (festival.university && festival.university.logo)}
+                                alt={`${getUniversityName()} ${festival.festival_name || festival.name} 포스터`}
                                 className="festival-detail-image"
                             />
                         </div>
