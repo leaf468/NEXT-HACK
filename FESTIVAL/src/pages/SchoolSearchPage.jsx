@@ -21,16 +21,20 @@ const SchoolSearchPage = () => {
         const fetchSchools = async () => {
             try {
                 setLoadingSchools(true);
+                console.log("학교 목록 가져오기 시작");
 
                 // 우선 DB에서 모든 학교 정보 가져오기 시도
+                console.log("getAllUniversities 함수 호출 중...");
                 const dbSchools = await getAllUniversities();
+                console.log(`getAllUniversities 결과: ${dbSchools?.length || 0}개 학교 데이터 수신됨`);
 
                 if (dbSchools && dbSchools.length > 0) {
+                    console.log("DB에서 학교 데이터 성공적으로 수신");
                     // DB에서 가져온 학교 정보를 화면에 맞게 변환
                     const formattedSchools = dbSchools.map(school => ({
                         id: school.id,
-                        name: school.name,
-                        shortName: school.shortName || school.name.replace('대학교', '대').replace('학교', ''),
+                        name: school.name || '이름 없음',
+                        shortName: school.shortName || (school.name ? school.name.replace('대학교', '대').replace('학교', '') : '이름 없음'),
                         location: {
                             address: school.address || '',
                             region: school.location || '지역 정보 없음',
@@ -39,19 +43,65 @@ const SchoolSearchPage = () => {
                         website: school.website || ''
                     }));
 
+                    console.log(`학교 데이터 포맷 완료: ${formattedSchools.length}개`);
                     setSchools(formattedSchools);
                     setFilteredSchools(formattedSchools);
+                    console.log("학교 목록 상태 업데이트 완료");
                 } else {
+                    console.log("DB에서 학교 데이터를 찾지 못함, 축제 데이터에서 추출 시작");
                     // DB에 학교 데이터가 없는 경우, 축제 데이터에서 학교 정보 추출
                     const festivalSchools = new Map();
 
+                    if (festivals && festivals.length > 0) {
+                        console.log(`축제 데이터에서 학교 정보 추출 중: ${festivals.length}개 축제 확인`);
+                        festivals.forEach(festival => {
+                            const schoolName = festival.universityName || festival.university?.name || festival.school || '';
+                            if (schoolName && !festivalSchools.has(schoolName)) {
+                                const shortName = schoolName.replace('대학교', '대').replace('학교', '');
+                                const region = festival.university?.location || festival.location?.region || '';
+
+                                festivalSchools.set(schoolName, {
+                                    id: festival.university?.id || `school-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                                    name: schoolName,
+                                    shortName: shortName,
+                                    location: {
+                                        address: festival.university?.address || festival.location?.address || '',
+                                        region: region || '지역 정보 없음',
+                                        coordinates: festival.location?.coordinates || { latitude: 0, longitude: 0 }
+                                    }
+                                });
+                            }
+                        });
+
+                        const extractedSchools = Array.from(festivalSchools.values());
+                        console.log(`축제 데이터에서 ${extractedSchools.length}개 학교 추출 완료`);
+                        // Sort schools alphabetically by name
+                        const sortedSchools = extractedSchools.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+                        setSchools(sortedSchools);
+                        setFilteredSchools(sortedSchools);
+                        console.log("학교 목록 상태 업데이트 완료 (축제 데이터에서 추출)");
+                    } else {
+                        console.log("축제 데이터도 없음, 빈 학교 목록 설정");
+                        setSchools([]);
+                        setFilteredSchools([]);
+                    }
+                }
+            } catch (error) {
+                console.error("학교 데이터를 가져오는데 실패했습니다:", error);
+
+                // 축제 데이터에서 학교 정보 추출 (백업 메커니즘)
+                console.log("오류 발생, 백업 메커니즘으로 축제 데이터에서 학교 정보 추출 시도");
+                const uniqueSchools = new Map();
+
+                if (festivals && festivals.length > 0) {
+                    console.log(`백업: 축제 데이터에서 학교 정보 추출 중: ${festivals.length}개 축제 확인`);
                     festivals.forEach(festival => {
                         const schoolName = festival.universityName || festival.university?.name || festival.school || '';
-                        if (schoolName && !festivalSchools.has(schoolName)) {
+                        if (schoolName && !uniqueSchools.has(schoolName)) {
                             const shortName = schoolName.replace('대학교', '대').replace('학교', '');
                             const region = festival.university?.location || festival.location?.region || '';
 
-                            festivalSchools.set(schoolName, {
+                            uniqueSchools.set(schoolName, {
                                 id: festival.university?.id || `school-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                                 name: schoolName,
                                 shortName: shortName,
@@ -64,44 +114,21 @@ const SchoolSearchPage = () => {
                         }
                     });
 
-                    const extractedSchools = Array.from(festivalSchools.values());
+                    const extractedSchools = Array.from(uniqueSchools.values());
+                    console.log(`백업: 축제 데이터에서 ${extractedSchools.length}개 학교 추출 완료`);
                     // Sort schools alphabetically by name
                     const sortedSchools = extractedSchools.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
                     setSchools(sortedSchools);
                     setFilteredSchools(sortedSchools);
+                    console.log("백업: 학교 목록 상태 업데이트 완료");
+                } else {
+                    console.log("백업: 축제 데이터도 없음, 빈 학교 목록 설정");
+                    setSchools([]);
+                    setFilteredSchools([]);
                 }
-            } catch (error) {
-                console.error("학교 데이터를 가져오는데 실패했습니다:", error);
-
-                // 축제 데이터에서 학교 정보 추출 (백업 메커니즘)
-                const uniqueSchools = new Map();
-
-                festivals.forEach(festival => {
-                    const schoolName = festival.universityName || festival.university?.name || festival.school || '';
-                    if (schoolName && !uniqueSchools.has(schoolName)) {
-                        const shortName = schoolName.replace('대학교', '대').replace('학교', '');
-                        const region = festival.university?.location || festival.location?.region || '';
-
-                        uniqueSchools.set(schoolName, {
-                            id: festival.university?.id || `school-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                            name: schoolName,
-                            shortName: shortName,
-                            location: {
-                                address: festival.university?.address || festival.location?.address || '',
-                                region: region || '지역 정보 없음',
-                                coordinates: festival.location?.coordinates || { latitude: 0, longitude: 0 }
-                            }
-                        });
-                    }
-                });
-
-                const extractedSchools = Array.from(uniqueSchools.values());
-                // Sort schools alphabetically by name
-                const sortedSchools = extractedSchools.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-                setSchools(sortedSchools);
-                setFilteredSchools(sortedSchools);
             } finally {
                 setLoadingSchools(false);
+                console.log("학교 데이터 로딩 상태 해제");
             }
         };
 
@@ -194,9 +221,6 @@ const SchoolSearchPage = () => {
                                 className="school-card"
                                 onClick={() => handleSchoolSelect(school.name)}
                             >
-                                <div className="school-logo">
-                                    <span>{school.shortName?.charAt(0) || school.name.charAt(0)}</span>
-                                </div>
                                 <div className="school-info">
                                     <h3>{school.name}</h3>
                                     <p>

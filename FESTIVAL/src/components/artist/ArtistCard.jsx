@@ -5,17 +5,21 @@ const ArtistCard = ({ artist, festivalCount, onClick }) => {
     return (
         <div className="artist-card" onClick={() => onClick(artist.name)}>
             <div className="artist-image-container">
-                {artist.image ? (
+                {artist.poster_url || artist.image || artist.imageUrl ? (
                     <img
-                        src={artist.image}
+                        src={`${artist.poster_url || artist.image || artist.imageUrl}${(artist.poster_url || artist.image || artist.imageUrl).includes('?') ? '&' : '?'}t=${Date.now()}`}
                         alt={artist.name}
                         className="artist-image"
+                        onError={(e) => {
+                            console.log(`Image load error for artist ${artist.name}`);
+                            e.target.style.display = 'none';
+                            e.target.nextElementSibling.style.display = 'block';
+                        }}
                     />
-                ) : (
-                    <div className="artist-placeholder">
-                        <span>{artist.name.charAt(0)}</span>
-                    </div>
-                )}
+                ) : null}
+                <div className="artist-placeholder" style={{ display: (artist.poster_url || artist.image || artist.imageUrl) ? 'none' : 'block' }}>
+                    <span>{artist.name.charAt(0)}</span>
+                </div>
             </div>
 
             <div className="artist-content">

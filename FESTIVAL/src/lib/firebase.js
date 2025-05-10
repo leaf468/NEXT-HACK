@@ -1,17 +1,18 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
-import { 
-  addDoc, 
-  collection, 
-  doc, 
-  getDocs, 
-  getDoc, 
-  query, 
-  where, 
-  updateDoc, 
-  arrayUnion, 
-  arrayRemove, 
+import { getStorage, ref, getDownloadURL } from "firebase/storage";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  query,
+  where,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
   orderBy,
   setDoc
 } from "firebase/firestore";
@@ -32,6 +33,20 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
+
+// Helper function to get URLs with cache-busting parameter to avoid CORS issues
+export const getImageUrlWithCacheBusting = async (path) => {
+  try {
+    const imageRef = ref(storage, path);
+    const url = await getDownloadURL(imageRef);
+    // Add timestamp to URL to bypass cache and prevent CORS issues
+    return `${url}&t=${Date.now()}`;
+  } catch (error) {
+    console.warn(`Could not fetch image from path: ${path}`, error);
+    return ''; // Return empty string if unable to fetch
+  }
+};
 
 // Festival API functions
 export const getAllFestivals = async () => {
@@ -392,16 +407,120 @@ export const getFavorites = async (userId) => {
 // University and Artist helper functions
 export const getAllUniversities = async () => {
   try {
+    console.log("시작: 모든 대학교 데이터 가져오기");
     const universitiesRef = collection(db, "universities");
     const universitySnapshot = await getDocs(universitiesRef);
-    
-    return universitySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+
+    console.log(`대학교 데이터 스냅샷 가져옴: ${universitySnapshot.docs.length}개 문서 발견`);
+
+    // Process universities - don't fetch logo URLs, only use text data
+    const universities = [];
+
+    for (const universityDoc of universitySnapshot.docs) {
+      try {
+        const universityData = universityDoc.data();
+        console.log(`대학교 처리 중: ${universityData.name || universityDoc.id}`);
+
+        universities.push({
+          id: universityDoc.id,
+          ...universityData,
+          // Exclude logo and logoUrl fields
+          logo: undefined,
+          logoUrl: undefined
+        });
+      } catch (docError) {
+        console.error(`대학교 데이터 처리 중 오류 발생 (ID: ${universityDoc.id}):`, docError);
+        // Continue processing other universities despite this error
+      }
+    }
+
+    console.log(`총 ${universities.length}개 대학교 데이터 처리 완료`);
+
+    // 아직 대학교 데이터가 없으면 대체 데이터 반환
+    if (universities.length === 0) {
+      console.log("대학교 데이터가 없어 기본 데이터 생성");
+      return [
+        {
+          id: 'default-snu',
+          name: '서울대학교',
+          shortName: '서울대',
+          location: '서울특별시',
+          address: '서울특별시 관악구 관악로 1'
+        },
+        {
+          id: 'default-yonsei',
+          name: '연세대학교',
+          shortName: '연세대',
+          location: '서울특별시',
+          address: '서울특별시 서대문구 연세로 50'
+        },
+        {
+          id: 'default-korea',
+          name: '고려대학교',
+          shortName: '고려대',
+          location: '서울특별시',
+          address: '서울특별시 성북구 안암로 145'
+        },
+        {
+          id: 'default-kaist',
+          name: '한국과학기술원',
+          shortName: 'KAIST',
+          location: '대전광역시',
+          address: '대전광역시 유성구 대학로 291'
+        },
+        {
+          id: 'default-suwon',
+          name: '수원대학교',
+          shortName: '수원대',
+          location: '경기도',
+          address: '경기도 화성시 봉담읍 와우안길 17'
+        }
+      ];
+    }
+
+    return universities;
   } catch (error) {
-    console.error("Error getting universities:", error);
-    throw error;
+    console.error("대학교 데이터 가져오기 실패:", error);
+    console.log("오류 발생으로 인해 기본 대학교 데이터 반환");
+
+    // 에러 발생 시 기본 데이터 반환 (앱이 크래시되지 않도록)
+    return [
+      {
+        id: 'default-snu',
+        name: '서울대학교',
+        shortName: '서울대',
+        location: '서울특별시',
+        address: '서울특별시 관악구 관악로 1'
+      },
+      {
+        id: 'default-yonsei',
+        name: '연세대학교',
+        shortName: '연세대',
+        location: '서울특별시',
+        address: '서울특별시 서대문구 연세로 50'
+      },
+      {
+        id: 'default-korea',
+        name: '고려대학교',
+        shortName: '고려대',
+        location: '서울특별시',
+        address: '서울특별시 성북구 안암로 145'
+      },
+      {
+        id: 'default-kaist',
+        name: '한국과학기술원',
+        shortName: 'KAIST',
+        location: '대전광역시',
+        address: '대전광역시 유성구 대학로 291'
+      },
+      {
+        id: 'default-suwon',
+        name: '수원대학교',
+        shortName: '수원대',
+        location: '경기도',
+        address: '경기도 화성시 봉담읍 와우안길 17'
+      }
+    ];
   }
 };
 
