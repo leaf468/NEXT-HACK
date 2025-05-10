@@ -5,6 +5,7 @@ import {
     searchFestivalsByArtist,
     searchFestivalsByDate,
     searchFestivalsByRegion,
+    filterFestivalsByStatus,
 } from "../services/festivalService";
 
 export const FestivalContext = createContext();
@@ -19,6 +20,7 @@ export const FestivalProvider = ({ children }) => {
         school: "",
         artist: "",
         region: "",
+        showOnlyActive: true,
     });
 
     // 모든 축제 데이터 불러오기
@@ -101,6 +103,10 @@ export const FestivalProvider = ({ children }) => {
                 console.log("After date filter:", results.length);
             }
 
+            // 축제 상태(진행 중/종료) 필터 적용
+            results = filterFestivalsByStatus(results, filters.showOnlyActive);
+            console.log("After status filter (showOnlyActive:", filters.showOnlyActive, "):", results.length);
+
             setFilteredFestivals(results);
         } catch (err) {
             setError("검색 중 오류가 발생했습니다.");
@@ -127,6 +133,7 @@ export const FestivalProvider = ({ children }) => {
             school: "",
             artist: "",
             region: "",
+            showOnlyActive: true,
         });
         setFilteredFestivals(festivals);
     };

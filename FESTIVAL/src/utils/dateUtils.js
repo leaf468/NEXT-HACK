@@ -2,7 +2,7 @@ import { format, isWithinInterval, parseISO } from "date-fns";
 import { ko } from "date-fns/locale";
 
 // 한국어 날짜 형식을 ISO 형식으로 변환
-const convertKoreanDateToISO = (koreanDate) => {
+export const convertKoreanDateToISO = (koreanDate) => {
     if (!koreanDate || typeof koreanDate !== "string") return null;
 
     // 이미 ISO 형식인지 확인 (YYYY-MM-DD)

@@ -1,5 +1,6 @@
 import { Festival, Artist } from '../models';
-import { formatDate, isDateInRange } from "../utils/dateUtils";
+import { formatDate, isDateInRange, convertKoreanDateToISO } from "../utils/dateUtils";
+import { parseISO } from "date-fns";
 import {
   getAllFestivals,
   getFestivalById,
@@ -330,10 +331,45 @@ export const searchFestivalsByRegion = async (region, festivals = null) => {
         artists: artists
       });
     });
-    
+
     return filteredFestivals;
   } catch (error) {
     console.error("지역별 축제 검색에 실패했습니다:", error);
     throw error;
   }
+};
+
+// 축제 상태(진행 중/종료)별 필터링
+export const filterFestivalsByStatus = (festivals, showOnlyActive = true) => {
+  if (!festivals || festivals.length === 0) return [];
+
+  const now = new Date();
+
+  return festivals.filter(festival => {
+    // 종료일이 없는 경우 처리
+    if (!festival.endDate) return showOnlyActive;
+
+    // 종료일 변환
+    let endDate;
+    if (festival.endDate instanceof Date) {
+      endDate = festival.endDate;
+    } else if (typeof festival.endDate === 'string') {
+      // 한국어 날짜 형식인지 확인 및 변환
+      const isoDate = convertKoreanDateToISO ? convertKoreanDateToISO(festival.endDate) : null;
+      if (isoDate) {
+        endDate = parseISO(isoDate);
+      } else {
+        endDate = parseISO(festival.endDate);
+      }
+    } else if (festival.endDate && typeof festival.endDate.toDate === 'function') {
+      endDate = festival.endDate.toDate();
+    } else {
+      // 유효하지 않은 종료일인 경우 진행 중으로 간주
+      return showOnlyActive;
+    }
+
+    return showOnlyActive
+      ? now <= endDate  // 진행 중이거나 예정된 축제
+      : now > endDate;  // 종료된 축제
+  });
 };

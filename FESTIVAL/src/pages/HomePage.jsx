@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useMemo } from "react";
 import { FestivalContext } from "../contexts/FestivalContext";
 import { NotificationContext } from "../contexts/NotificationContext";
 import SearchBar from "../components/common/SearchBar";
@@ -239,12 +239,30 @@ const HomePage = () => {
             </section>
 
             <section className="festivals-section">
+                <div className="toggle-container">
+                    <button
+                        className={`toggle-btn ${filters.showOnlyActive ? 'active' : ''}`}
+                        onClick={() => updateFilters({ showOnlyActive: true })}
+                    >
+                        진행중인 축제
+                    </button>
+                    <button
+                        className={`toggle-btn ${!filters.showOnlyActive ? 'active' : ''}`}
+                        onClick={() => updateFilters({ showOnlyActive: false })}
+                    >
+                        종료된 축제
+                    </button>
+                </div>
+
                 {loading ? (
                     <div className="loading-spinner">로딩 중...</div>
                 ) : error ? (
                     <div className="error-message">{error}</div>
                 ) : filteredFestivals.length > 0 ? (
-                    <FestivalList festivals={[...filteredFestivals].sort((a, b) => a.name.localeCompare(b.name, 'ko'))} />
+                    <FestivalList
+                        festivals={[...filteredFestivals]
+                            .sort((a, b) => a.name.localeCompare(b.name, 'ko'))}
+                    />
                 ) : (
                     <div className="no-festivals">
                         <p>검색 조건에 맞는 축제가 없습니다.</p>
