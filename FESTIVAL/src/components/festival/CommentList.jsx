@@ -2,11 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useContext } from 'react';
 import { UserContext } from '../../contexts/UserContext';
 import { fetchCommentsByFestivalId, deleteComment } from '../../services/commentService';
+import DeleteConfirmModal from './DeleteConfirmModal';
+import '../../styles/components/deleteModal.css';
 
 const CommentList = ({ festivalId, refreshKey, onCommentDeleted }) => {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState(null);
   const { user: currentUser } = useContext(UserContext);
 
   useEffect(() => {
@@ -29,18 +33,30 @@ const CommentList = ({ festivalId, refreshKey, onCommentDeleted }) => {
     loadComments();
   }, [festivalId, refreshKey]);
 
-  const handleDeleteComment = async (commentId) => {
-    if (window.confirm('정말 이 댓글을 삭제하시겠습니까?')) {
-      try {
-        await deleteComment(commentId);
-        setComments(comments.filter(comment => comment.id !== commentId));
-        if (onCommentDeleted) {
-          onCommentDeleted();
-        }
-      } catch (err) {
-        console.error('댓글 삭제에 실패했습니다:', err);
-        alert('댓글 삭제에 실패했습니다. 나중에 다시 시도해주세요.');
+  const openDeleteModal = (commentId) => {
+    setCommentToDelete(commentId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setCommentToDelete(null);
+  };
+
+  const handleDeleteComment = async () => {
+    if (!commentToDelete) return;
+
+    try {
+      await deleteComment(commentToDelete);
+      setComments(comments.filter(comment => comment.id !== commentToDelete));
+      if (onCommentDeleted) {
+        onCommentDeleted();
       }
+      closeDeleteModal();
+    } catch (err) {
+      console.error('댓글 삭제에 실패했습니다:', err);
+      alert('댓글 삭제에 실패했습니다. 나중에 다시 시도해주세요.');
+      closeDeleteModal();
     }
   };
 
@@ -95,10 +111,10 @@ const CommentList = ({ festivalId, refreshKey, onCommentDeleted }) => {
               </div>
               {currentUser && currentUser.id === comment.userId && (
                 <button
-                  onClick={() => handleDeleteComment(comment.id)}
-                  className="comment-delete-btn flex items-center text-xs text-red-500 hover:text-red-600 px-1.5 py-0.5 rounded hover:bg-red-50 transition-colors duration-200"
+                  onClick={() => openDeleteModal(comment.id)}
+                  className="comment-delete-btn flex items-center text-sm text-red-500 hover:text-red-600 px-3 py-1.5 rounded hover:bg-red-50 transition-colors duration-200 border border-red-200 font-medium"
                 >
-                  <span className="mr-0.5">×</span>
+                  <span className="mr-1.5 text-lg">×</span>
                   삭제
                 </button>
               )}
@@ -109,6 +125,13 @@ const CommentList = ({ festivalId, refreshKey, onCommentDeleted }) => {
           </div>
         ))}
       </div>
+
+      <DeleteConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={closeDeleteModal}
+        onConfirm={handleDeleteComment}
+        itemType="댓글"
+      />
     </div>
   );
 };

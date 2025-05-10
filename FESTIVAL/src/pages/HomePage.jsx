@@ -244,7 +244,7 @@ const HomePage = () => {
                 ) : error ? (
                     <div className="error-message">{error}</div>
                 ) : filteredFestivals.length > 0 ? (
-                    <FestivalList festivals={filteredFestivals} />
+                    <FestivalList festivals={[...filteredFestivals].sort((a, b) => a.name.localeCompare(b.name, 'ko'))} />
                 ) : (
                     <div className="no-festivals">
                         <p>검색 조건에 맞는 축제가 없습니다.</p>

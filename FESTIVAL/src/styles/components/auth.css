@@ -170,6 +170,9 @@
   padding: 2rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   animation: popup-fade-in 0.3s ease-out;
+  margin: 1rem;
+  position: relative;
+  overflow: hidden;
 }
 
 @keyframes popup-fade-in {
@@ -205,20 +208,45 @@
 
 .identifier-type-toggle {
   display: flex;
-  gap: 1rem;
+  gap: 1.2rem;
   margin-bottom: 0.8rem;
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 
-.identifier-type-toggle label {
+.identifier-type-toggle label.radio-label {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.5rem;
   cursor: pointer;
+  padding: 0.5rem 0.8rem;
+  background-color: #f8fafd;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  border: 1px solid #e5e9f2;
+  flex: 1;
+  min-width: 120px;
+}
+
+.identifier-type-toggle label.radio-label:hover {
+  background-color: #eef2fa;
+  border-color: #d0d8e8;
+}
+
+.identifier-type-toggle input[type="radio"] {
+  margin-right: 0.2rem;
+  accent-color: var(--primary-color);
 }
 
 .random-code-container {
   display: flex;
   gap: 0.5rem;
+  width: 100%;
+}
+
+.random-code-container input {
+  flex: 1;
+  min-width: 0;
 }
 
 .generate-code-btn {
@@ -230,10 +258,18 @@
   font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
 }
 
 .generate-code-btn:hover {
   background-color: var(--secondary-color-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .close-popup-btn {
@@ -242,15 +278,31 @@
   border-radius: 8px;
   padding: 0.7rem;
   width: 100%;
-  margin-top: 1rem;
+  margin-top: 1.2rem;
   cursor: pointer;
   font-size: 0.95rem;
   transition: all 0.2s;
+  color: #666;
+  font-weight: 500;
 }
 
 .close-popup-btn:hover {
   background-color: #f5f5f5;
   border-color: #ccc;
+  color: #333;
+}
+
+/* For screen readers only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 /* 반응형 스타일 */
@@ -265,6 +317,11 @@
 
   .popup-content {
     padding: 1.5rem;
+    max-width: 350px;
+  }
+  
+  .form-group input {
+    font-size: 16px; /* Prevents iOS zoom on focus */
   }
 }
 
@@ -283,11 +340,67 @@
   }
 
   .popup-content {
-    width: 95%;
+    width: calc(100% - 32px);
     padding: 1.25rem;
+    margin: 0.5rem;
+    max-height: 90vh;
+    overflow-y: auto;
   }
 
   .popup-content h2 {
     font-size: 1.5rem;
+  }
+
+  .identifier-type-toggle {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .identifier-type-toggle label.radio-label {
+    width: 100%;
+    justify-content: center;
+    padding: 0.6rem 0.5rem;
+  }
+
+  .random-code-container {
+    flex-direction: column;
+  }
+
+  .generate-code-btn {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+  }
+  
+  .auth-form {
+    gap: 1.2rem;
+  }
+  
+  .auth-submit-btn, 
+  .close-popup-btn {
+    padding: 0.8rem;
+    font-size: 16px;
+  }
+}
+
+/* Fix for very small screens */
+@media (max-width: 350px) {
+  .popup-content {
+    width: calc(100% - 20px);
+    padding: 1rem;
+    margin: 0.25rem;
+  }
+  
+  .popup-content h2 {
+    font-size: 1.3rem;
+  }
+  
+  .form-group label {
+    font-size: 0.9rem;
+  }
+  
+  .auth-error {
+    font-size: 0.85rem;
+    padding: 0.7rem 0.8rem;
   }
 }

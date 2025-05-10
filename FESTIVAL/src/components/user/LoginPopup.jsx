@@ -16,6 +16,29 @@ const LoginPopup = ({ isOpen, onClose }) => {
     return Math.floor(1000 + Math.random() * 9000).toString();
   };
 
+  // Close modal with ESC key and lock body scroll
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscKey = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        if (localStorage.getItem("festivalUserVisited")) {
+          onClose && onClose();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleEscKey);
+
+    // Lock body scroll when modal is open
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', handleEscKey);
+      document.body.style.overflow = 'visible';
+    };
+  }, [isOpen, onClose]);
+
   const switchIdentifierType = () => {
     setIdentifierType(identifierType === "phone" ? "random" : "phone");
     setIdentifier("");
@@ -81,9 +104,9 @@ const LoginPopup = ({ isOpen, onClose }) => {
         <div className="popup-overlay" onClick={handleClickOutside}>
           <div className="popup-content">
             <h2>간편 로그인</h2>
-            
+
             {error && <p className="auth-error">{error}</p>}
-            
+
             <form onSubmit={handleSubmit} className="auth-form">
               <div className="form-group">
                 <label htmlFor="name">이름 (2-3글자)</label>
@@ -97,27 +120,27 @@ const LoginPopup = ({ isOpen, onClose }) => {
                   maxLength={3}
                 />
               </div>
-              
+
               <div className="form-group">
                 <div className="identifier-type-toggle">
-                  <label>
+                  <label className="radio-label">
                     <input
                       type="radio"
                       checked={identifierType === "phone"}
                       onChange={() => setIdentifierType("phone")}
                     />
-                    전화번호
+                    <span>전화번호</span>
                   </label>
-                  <label>
+                  <label className="radio-label">
                     <input
                       type="radio"
                       checked={identifierType === "random"}
                       onChange={() => setIdentifierType("random")}
                     />
-                    랜덤 숫자 (4자리)
+                    <span>랜덤 숫자 (4자리)</span>
                   </label>
                 </div>
-                
+
                 {identifierType === "phone" ? (
                   <>
                     <label htmlFor="phone">전화번호</label>
@@ -144,8 +167,8 @@ const LoginPopup = ({ isOpen, onClose }) => {
                         required
                         maxLength={4}
                       />
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         className="generate-code-btn"
                         onClick={() => setIdentifier(generateRandomCode())}
                       >
@@ -155,19 +178,19 @@ const LoginPopup = ({ isOpen, onClose }) => {
                   </>
                 )}
               </div>
-              
-              <button 
-                type="submit" 
+
+              <button
+                type="submit"
                 className="auth-submit-btn"
                 disabled={loading}
               >
                 {loading ? "처리 중..." : "로그인"}
               </button>
             </form>
-            
+
             {localStorage.getItem("festivalUserVisited") && (
-              <button 
-                onClick={onClose} 
+              <button
+                onClick={onClose}
                 className="close-popup-btn"
               >
                 닫기

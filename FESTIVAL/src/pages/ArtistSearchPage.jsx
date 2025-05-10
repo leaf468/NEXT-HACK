@@ -58,8 +58,10 @@ const ArtistSearchPage = () => {
                     });
 
                     const extractedArtists = Array.from(festivalArtists.values());
-                    setArtists(extractedArtists);
-                    setFilteredArtists(extractedArtists);
+                    // Sort artists alphabetically by name
+                    const sortedArtists = extractedArtists.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+                    setArtists(sortedArtists);
+                    setFilteredArtists(sortedArtists);
                 }
             } catch (error) {
                 console.error("아티스트 데이터를 가져오는데 실패했습니다:", error);
@@ -83,8 +85,10 @@ const ArtistSearchPage = () => {
                     }
                 });
 
-                setArtists(extractedArtists);
-                setFilteredArtists(extractedArtists);
+                // Sort artists alphabetically by name
+                const sortedArtists = extractedArtists.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+                setArtists(sortedArtists);
+                setFilteredArtists(sortedArtists);
             } finally {
                 setLoadingArtists(false);
             }

@@ -31,13 +31,17 @@ const Navbar = () => {
         setMobileMenuOpen(!mobileMenuOpen);
     };
 
-    // 링크 클릭 시 모바일 메뉴 닫기 및 페이지 이동
+    // 링크 클릭 시 모바일 메뉴 닫기, 페이지 이동 및 페이지 상단으로 스크롤
     const handleLinkClick = (path) => {
         if (mobileMenuOpen) {
             setMobileMenuOpen(false);
         }
         if (path) {
             navigate(path, { replace: false });
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
         }
     };
 

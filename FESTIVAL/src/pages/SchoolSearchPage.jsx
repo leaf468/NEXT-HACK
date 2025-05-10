@@ -65,8 +65,10 @@ const SchoolSearchPage = () => {
                     });
 
                     const extractedSchools = Array.from(festivalSchools.values());
-                    setSchools(extractedSchools);
-                    setFilteredSchools(extractedSchools);
+                    // Sort schools alphabetically by name
+                    const sortedSchools = extractedSchools.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+                    setSchools(sortedSchools);
+                    setFilteredSchools(sortedSchools);
                 }
             } catch (error) {
                 console.error("학교 데이터를 가져오는데 실패했습니다:", error);
@@ -94,8 +96,10 @@ const SchoolSearchPage = () => {
                 });
 
                 const extractedSchools = Array.from(uniqueSchools.values());
-                setSchools(extractedSchools);
-                setFilteredSchools(extractedSchools);
+                // Sort schools alphabetically by name
+                const sortedSchools = extractedSchools.sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+                setSchools(sortedSchools);
+                setFilteredSchools(sortedSchools);
             } finally {
                 setLoadingSchools(false);
             }
