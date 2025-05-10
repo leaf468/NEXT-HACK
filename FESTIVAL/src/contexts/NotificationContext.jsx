@@ -1,3 +1,4 @@
+// src/contexts/NotificationContext.jsx
 import React, { createContext, useState, useEffect, useContext } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { UserContext } from "./UserContext";
@@ -12,6 +13,12 @@ export const NotificationProvider = ({ children }) => {
     const { favorites } = useContext(UserContext);
     const { festivals } = useContext(FestivalContext);
 
+    // Don't automatically show notifications when new ones come in
+    // This was causing issues with the toggle functionality
+    // useEffect(() => {
+    //     setShowNotification(notifications.length > 0);
+    // }, [notifications]);
+
     // 알림 표시
     const displayNotification = (title, message, type = "info") => {
         const newNotification = {
@@ -20,13 +27,13 @@ export const NotificationProvider = ({ children }) => {
             message,
             type,
             read: false,
+            show: true, // <-- start visible
             timestamp: new Date(),
         };
 
         setNotifications((prev) => [newNotification, ...prev]);
-        setShowNotification(true);
 
-        // 10초 후 자동으로 닫기
+        // 자동 제거 예약
         setTimeout(() => {
             removeNotification(newNotification.id);
         }, 10000);
@@ -36,94 +43,78 @@ export const NotificationProvider = ({ children }) => {
 
     // 알림 제거
     const removeNotification = (notificationId) => {
+        // 1) mark show=false for fade-out animation
         setNotifications((prev) =>
-            prev.map((notification) =>
-                notification.id === notificationId
-                    ? { ...notification, show: false }
-                    : notification
+            prev.map((n) =>
+                n.id === notificationId ? { ...n, show: false } : n
             )
         );
 
-        // 애니메이션 후 실제로 제거
+        // 2) after animation, actually drop from array
         setTimeout(() => {
             setNotifications((prev) =>
-                prev.filter(
-                    (notification) => notification.id !== notificationId
-                )
+                prev.filter((n) => n.id !== notificationId)
             );
         }, 300);
     };
 
     // 모든 알림 읽음 처리
     const markAllAsRead = () => {
-        setNotifications((prev) =>
-            prev.map((notification) => ({ ...notification, read: true }))
-        );
+        setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     };
 
-    // 알림 개수 가져오기
-    const getUnreadCount = () => {
-        return notifications.filter((notification) => !notification.read)
-            .length;
-    };
+    // 읽지 않은 개수
+    const getUnreadCount = () => notifications.filter((n) => !n.read).length;
 
-    // 즐겨찾기한 축제 업데이트 체크 (실시간 알림 구현)
+    // 즐겨찾기 축제 업데이트 주기적 체크
     useEffect(() => {
-        if (festivals.length === 0 || favorites.length === 0) return;
+        if (!festivals.length || !favorites.length) return;
 
         const checkForUpdates = async () => {
             try {
-                // 즐겨찾기한 축제들만 업데이트 체크
-                const favoriteFestivals = festivals.filter((festival) =>
-                    favorites.includes(festival.id)
-                );
-
-                if (favoriteFestivals.length === 0) return;
+                const favs = festivals.filter((f) => favorites.includes(f.id));
+                if (!favs.length) return;
 
                 const updates = await checkFestivalUpdates(
-                    favoriteFestivals.map((f) => f.id)
+                    favs.map((f) => f.id)
                 );
 
-                // 업데이트가 있는 경우 알림 표시
-                updates.forEach((update) => {
-                    const festival = festivals.find(
-                        (f) => f.id === update.festivalId
-                    );
-                    if (festival) {
-                        const schoolName = festival.universityName || festival.university?.name || festival.school || '대학교';
-                        const festivalName = festival.name || '축제';
+                updates.forEach((u) => {
+                    const fest = festivals.find((f) => f.id === u.festivalId);
+                    if (!fest) return;
 
-                        displayNotification(
-                            "관심 축제 정보 업데이트",
-                            `${schoolName} ${festivalName}의 ${update.field}이(가) 업데이트 되었습니다.`,
-                            "info"
-                        );
-                    }
+                    const schoolName =
+                        fest.universityName ||
+                        fest.university?.name ||
+                        fest.school ||
+                        "대학교";
+                    const festName = fest.name || "축제";
+
+                    displayNotification(
+                        "관심 축제 정보 업데이트",
+                        `${schoolName} ${festName}의 ${u.field}이(가) 업데이트 되었습니다.`
+                    );
                 });
-            } catch (error) {
-                console.error("축제 업데이트 확인 중 오류 발생:", error);
+            } catch (err) {
+                console.error("축제 업데이트 확인 중 오류:", err);
             }
         };
 
-        // 처음 로드 시에만 업데이트 체크 - 이후에는 사용자 작업에 따라 발생
         checkForUpdates();
-
-        // 5분마다 체크하는 간격 설정 (개발 중에는 시간을 짧게 설정하여 테스트)
-        const intervalId = setInterval(checkForUpdates, 5 * 60 * 1000);
-
-        return () => clearInterval(intervalId);
+        const id = setInterval(checkForUpdates, 5 * 60 * 1000);
+        return () => clearInterval(id);
     }, [festivals, favorites]);
 
     return (
         <NotificationContext.Provider
             value={{
                 notifications,
+                showNotification,
+                setShowNotification,
                 displayNotification,
                 removeNotification,
                 markAllAsRead,
                 getUnreadCount,
-                showNotification,
-                setShowNotification,
             }}
         >
             {children}

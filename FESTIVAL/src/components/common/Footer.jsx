@@ -2,6 +2,14 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 const Footer = () => {
+    // 페이지 상단으로 스크롤하는 함수
+    const scrollToTop = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth", // 부드러운 스크롤 효과 적용
+        });
+    };
+
     return (
         <footer className="footer">
             <div className="footer-content">
@@ -16,16 +24,24 @@ const Footer = () => {
                     <h3 className="footer-title">바로가기</h3>
                     <ul className="footer-links">
                         <li>
-                            <Link to="/">홈</Link>
+                            <Link to="/" onClick={scrollToTop}>
+                                홈
+                            </Link>
                         </li>
                         <li>
-                            <Link to="/search/school">학교별 검색</Link>
+                            <Link to="/search/school" onClick={scrollToTop}>
+                                학교별 검색
+                            </Link>
                         </li>
                         <li>
-                            <Link to="/search/artist">아티스트별 검색</Link>
+                            <Link to="/search/artist" onClick={scrollToTop}>
+                                아티스트별 검색
+                            </Link>
                         </li>
                         <li>
-                            <Link to="/favorites">즐겨찾기</Link>
+                            <Link to="/favorites" onClick={scrollToTop}>
+                                즐겨찾기
+                            </Link>
                         </li>
                     </ul>
                 </div>

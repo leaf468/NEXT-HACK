@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { FaBell, FaHeart, FaSearch, FaBars, FaTimes, FaUser } from "react-icons/fa";
 import { NotificationContext } from "../../contexts/NotificationContext";
 import { UserContext } from "../../contexts/UserContext";
-import NotificationList from "../user/NotificationList";
+import NotificationDropdown from "./NotificationDropdown";
 
 const Navbar = () => {
     const location = useLocation();
@@ -153,11 +153,7 @@ const Navbar = () => {
                 </div>
 
                 {/* 알림 드롭다운 */}
-                {showNotification && (
-                    <div className="notification-dropdown">
-                        <NotificationList />
-                    </div>
-                )}
+                <NotificationDropdown />
             </div>
         </nav>
     );

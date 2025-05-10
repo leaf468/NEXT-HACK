@@ -1,246 +1,220 @@
-/* 알림 컴포넌트 스타일 */
-.notification-list {
-  width: 300px;
-  max-height: 500px;
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  position: absolute;
-  top: 60px;
-  right: 10px;
-  z-index: 100;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  animation: notification-slide-in 0.3s ease-out;
-}
+/* src/styles/components/notification.css */
 
-@keyframes notification-slide-in {
-  from {
+/* 기본 상태: 완전히 숨김 */
+.notification-list {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 60px;
+    right: 10px;
+    width: 300px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+
+    /* 숨김 효과 */
+    max-height: 0;
     opacity: 0;
     transform: translateY(-20px);
-  }
-  to {
+
+    /* 전환 애니메이션 */
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out,
+        transform 0.3s ease-out;
+}
+
+/* 알림이 있을 때 붙일 클래스 */
+.notification-list.show {
+    /* 충분히 큰 높이 지정 후 overflow:hidden 으로 실제 컨텐츠 높이에 맞춰 보여줌 */
+    max-height: 600px; /* 필요에 따라 더 키워도 OK */
     opacity: 1;
     transform: translateY(0);
-  }
+}
+
+/* 슬라이드 인 애니메이션 */
+@keyframes notification-slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .notification-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  background-color: #f8fafd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    background-color: #f8fafd;
 }
 
 .notification-header h3 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #333;
-  margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
 }
 
 .mark-all-read-button {
-  display: flex;
-  align-items: center;
-  background: none;
-  border: none;
-  font-size: 0.8rem;
-  color: #4a6cf7;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    font-size: 0.8rem;
+    color: #4a6cf7;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
 }
 
 .mark-all-read-button:hover {
-  background-color: rgba(74, 108, 247, 0.1);
+    background-color: rgba(74, 108, 247, 0.1);
 }
 
 .mark-all-read-button .icon {
-  margin-right: 4px;
-  font-size: 0.7rem;
+    margin-right: 4px;
+    font-size: 0.7rem;
 }
 
 .notifications-container {
-  overflow-y: auto;
-  max-height: 400px;
-  padding: 8px;
+    overflow-y: auto;
+    /* show 시 max-height: 600px 에서 헤더 높이(약 56px) 빼고 */
+    max-height: calc(600px - 56px);
+    padding: 8px;
 }
 
 .notification-item {
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  transition: all 0.2s;
-  position: relative;
-  border: 1px solid transparent;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+    border: 1px solid transparent;
+    transition: background-color 0.2s, border-color 0.2s;
 }
 
 .notification-item.unread {
-  background-color: #eef2ff;
-  border-color: #dde4ff;
+    background-color: #eef2ff;
+    border-color: #dde4ff;
 }
 
 .notification-item.read {
-  background-color: #f9f9f9;
+    background-color: #f9f9f9;
 }
 
 .notification-item:hover {
-  background-color: #f0f4ff;
+    background-color: #f0f4ff;
 }
 
 .notification-content {
-  flex: 1;
-  padding-right: 24px;
+    flex: 1;
+    padding-right: 24px;
 }
 
 .notification-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  margin: 0 0 6px 0;
-  color: #333;
-  line-height: 1.3;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 0 0 6px 0;
+    color: #333;
+    line-height: 1.3;
 }
 
 .notification-message {
-  font-size: 0.85rem;
-  margin: 0 0 8px 0;
-  color: #555;
-  line-height: 1.4;
+    font-size: 0.85rem;
+    margin: 0 0 8px 0;
+    color: #555;
+    line-height: 1.4;
 }
 
 .notification-time {
-  font-size: 0.75rem;
-  color: #888;
-  display: block;
+    font-size: 0.75rem;
+    color: #888;
+    display: block;
 }
 
 .notification-close {
-  background: none;
-  border: none;
-  font-size: 0.8rem;
-  color: #aaa;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  position: absolute;
-  top: 10px;
-  right: 10px;
+    background: none;
+    border: none;
+    font-size: 0.8rem;
+    color: #aaa;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    transition: color 0.2s, background-color 0.2s;
 }
 
 .notification-close:hover {
-  color: #f44336;
-  background-color: rgba(244, 67, 54, 0.1);
+    color: #f44336;
+    background-color: rgba(244, 67, 54, 0.1);
 }
 
 .empty-notifications {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 16px;
-  color: #888;
-  text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px;
+    color: #888;
+    text-align: center;
 }
 
 .empty-icon {
-  font-size: 2.5rem;
-  margin-bottom: 12px;
-  color: #ccc;
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    color: #ccc;
 }
 
-/* 반응형 스타일 */
+/* 반응형 */
 @media (max-width: 768px) {
-  .notification-list {
-    width: 280px;
-    right: 0;
-    top: 55px;
-    max-height: 60vh;
-  }
+    .notification-list {
+        right: 0;
+        top: 55px;
+        width: 280px;
+    }
 
-  .notifications-container {
-    max-height: calc(60vh - 50px);
-  }
-
-  .notification-item {
-    padding: 10px;
-  }
+    .notifications-container {
+        max-height: calc(60vh - 50px);
+    }
 }
 
 @media (max-width: 480px) {
-  .notification-list {
-    position: fixed;
-    width: 90%;
-    max-width: 320px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    max-height: 80vh;
-    z-index: 1100;
-  }
+    .notification-list {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90%;
+        max-width: 320px;
+        max-height: 80vh;
+    }
 
-  .notifications-container {
-    max-height: calc(80vh - 100px);
-  }
-
-  .notification-header {
-    padding: 12px;
-  }
-
-  .notification-item {
-    padding: 10px;
-  }
-
-  .notification-title {
-    font-size: 0.9rem;
-  }
-
-  .notification-message {
-    font-size: 0.8rem;
-  }
-
-  .empty-notifications {
-    padding: 30px 12px;
-  }
-
-  .mark-all-read-button {
-    font-size: 0.75rem;
-  }
+    .notifications-container {
+        max-height: calc(80vh - 100px);
+    }
 }
 
-/* Fix for very small screens */
 @media (max-width: 350px) {
-  .notification-list {
-    width: 100%;
-    max-width: none;
-    border-radius: 0;
-    height: 100vh;
-    top: 0;
-    left: 0;
-    transform: none;
-    max-height: none;
-  }
+    .notification-list {
+        width: 100%;
+        height: 100vh;
+        top: 0;
+        left: 0;
+        border-radius: 0;
+        max-height: none;
+    }
 
-  .notifications-container {
-    max-height: calc(100vh - 60px);
-  }
-
-  .notification-header {
-    padding: 10px;
-  }
-
-  .notification-item {
-    border-radius: 4px;
-  }
+    .notifications-container {
+        max-height: calc(100vh - 60px);
+    }
 }

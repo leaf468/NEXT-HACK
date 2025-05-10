@@ -4,6 +4,7 @@ import { UserContext } from "../../contexts/UserContext";
 import { FestivalContext } from "../../contexts/FestivalContext";
 import FestivalCard from "../festival/FestivalCard";
 import { filterFestivalsByStatus } from "../../utils/filterUtils";
+import "../../styles/components/favoriteList.css";
 
 const FavoriteList = () => {
     const { favorites } = useContext(UserContext);
@@ -37,7 +38,9 @@ const FavoriteList = () => {
             <div className="empty-favorites">
                 <p>즐겨찾기한 축제가 없습니다.</p>
                 <p>관심 있는 축제를 즐겨찾기에 추가해보세요!</p>
-                <Link to="/" className="explore-btn">축제 둘러보기</Link>
+                <Link to="/" className="explore-btn">
+                    축제 둘러보기
+                </Link>
             </div>
         );
     }

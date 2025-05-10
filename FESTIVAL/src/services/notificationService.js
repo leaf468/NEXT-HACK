@@ -192,10 +192,10 @@ export const markAllNotificationsAsRead = async (userId) => {
 // 실시간 알림 구독 (Firebase 사용)
 export const subscribeToNotifications = (userId, callback) => {
   if (USE_MOCK_DATA) {
-    // 모의 알림 생성 (더 낮은 빈도로)
+    // 모의 알림 생성 (로컬 테스트용)
     const interval = setInterval(() => {
-      // 95% 확률로 알림 생성 안함 (알림 빈도 줄임)
-      if (Math.random() < 0.95) return;
+      // 50% 확률로 알림 생성 (테스트를 위해 빈도 높임)
+      if (Math.random() < 0.5) return;
 
       // 주로 즐겨찾기 업데이트 알림만 생성
       const types = [
@@ -224,7 +224,7 @@ export const subscribeToNotifications = (userId, callback) => {
         "notifications",
         JSON.stringify(notifications)
       );
-    }, Math.random() * 30000 + 30000); // 30-60초마다 (빈도 낮춤)
+    }, Math.random() * 5000 + 5000); // 5-10초마다 (테스트를 위해 빈도 높임)
 
     return () => clearInterval(interval);
   }

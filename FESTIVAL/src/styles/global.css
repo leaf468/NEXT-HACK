@@ -1546,7 +1546,7 @@ input[type="date"].filter-input {
     height: 120px;
     border-radius: 50%;
     overflow: hidden;
-    margin: 0 auto var(--spacing-sm);
+    margin: var(--spacing-md) auto var(--spacing-sm);
     border: 3px solid white;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
