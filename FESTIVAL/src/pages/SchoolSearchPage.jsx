@@ -86,7 +86,10 @@ const SchoolSearchPage = () => {
             </section>
 
             <section className="schools-section">
-                <h2>학교 목록</h2>
+                <h2>
+                    <i className="fa fa-university" style={{ color: 'var(--primary-color)' }}></i>
+                    학교 목록
+                </h2>
                 <div className="school-grid">
                     {filteredSchools.map((school) => (
                         <div
@@ -99,7 +102,10 @@ const SchoolSearchPage = () => {
                             </div>
                             <div className="school-info">
                                 <h3>{school.name}</h3>
-                                <p>{school.location.region}</p>
+                                <p>
+                                    <i className="fa fa-map-marker" style={{ marginRight: '5px', color: '#666' }}></i>
+                                    {school.location.region}
+                                </p>
                             </div>
                         </div>
                     ))}
@@ -109,6 +115,7 @@ const SchoolSearchPage = () => {
             <section id="festivals-section" className="festivals-section">
                 <div className="festivals-header">
                     <h2>
+                        <i className="fa fa-calendar" style={{ color: 'var(--primary-color)' }}></i>
                         {selectedSchool
                             ? `'${selectedSchool}'의 축제`
                             : "모든 축제"}

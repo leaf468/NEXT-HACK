@@ -1,97 +1,25 @@
-import { 
-  getDocument, 
-  getCollection, 
-  addDocument, 
-  updateDocument, 
-  deleteDocument, 
-  COLLECTIONS 
-} from './api';
-import { auth } from './firebase';
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword,
-  signOut,
-  updateProfile
-} from 'firebase/auth';
+import {
+  loginUser as firebaseLoginUser,
+  getUserById as firebaseGetUserById,
+  addFavorite as addFirebaseFavorite,
+  removeFavorite as removeFirebaseFavorite,
+  getFavorites
+} from '../lib/firebase';
 
-// Firebase 데이터를 사용하도록 설정
-const USE_MOCK_DATA = false;
-
-// 사용자 등록
-export const registerUser = async (email, password, displayName) => {
-  if (USE_MOCK_DATA) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const userId = `mock-user-${Date.now()}`;
-        localStorage.setItem('currentUser', JSON.stringify({
-          id: userId,
-          email,
-          displayName
-        }));
-        resolve({ id: userId, email, displayName });
-      }, 300);
-    });
-  }
-
+// 사용자 로그인 (간단한 방식)
+export const loginUser = async (username) => {
   try {
-    // Firebase Authentication으로 사용자 생성
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
+    // 새로운 로그인 방식: 이름+숫자 형식으로 간단히 로그인
+    const user = await firebaseLoginUser(username);
     
-    // 사용자 프로필 업데이트
-    await updateProfile(user, { displayName });
-
-    // Firestore에 사용자 데이터 저장
-    await addDocument(COLLECTIONS.USERS, {
-      uid: user.uid,
-      email: user.email,
-      displayName,
-      photoURL: user.photoURL || null,
-      createdAt: new Date().toISOString()
-    });
-
-    return {
-      id: user.uid,
-      email: user.email,
-      displayName
-    };
-  } catch (error) {
-    console.error("사용자 등록에 실패했습니다:", error);
-    throw error;
-  }
-};
-
-// 로그인
-export const loginUser = async (email, password) => {
-  if (USE_MOCK_DATA) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (email && password) {
-          const userId = `mock-user-123`;
-          const user = {
-            id: userId,
-            email,
-            displayName: email.split('@')[0]
-          };
-          localStorage.setItem('currentUser', JSON.stringify(user));
-          resolve(user);
-        } else {
-          reject(new Error('이메일과 비밀번호가 필요합니다.'));
-        }
-      }, 300);
-    });
-  }
-
-  try {
-    // Firebase Authentication으로 로그인
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
+    // 브라우저에 사용자 정보 저장 (나중에 사용할 수 있게)
+    localStorage.setItem('currentUser', JSON.stringify({
+      id: user.id,
+      name: user.name,
+      faves: user.faves || []
+    }));
     
-    return {
-      id: user.uid,
-      email: user.email,
-      displayName: user.displayName
-    };
+    return user;
   } catch (error) {
     console.error("로그인에 실패했습니다:", error);
     throw error;
@@ -100,18 +28,8 @@ export const loginUser = async (email, password) => {
 
 // 로그아웃
 export const logoutUser = async () => {
-  if (USE_MOCK_DATA) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        localStorage.removeItem('currentUser');
-        resolve(true);
-      }, 300);
-    });
-  }
-
   try {
-    // Firebase Authentication에서 로그아웃
-    await signOut(auth);
+    localStorage.removeItem('currentUser');
     return true;
   } catch (error) {
     console.error("로그아웃에 실패했습니다:", error);
@@ -121,44 +39,25 @@ export const logoutUser = async () => {
 
 // 현재 로그인한 사용자 가져오기
 export const getCurrentUser = () => {
-  if (USE_MOCK_DATA) {
-    const userString = localStorage.getItem('currentUser');
-    return userString ? JSON.parse(userString) : null;
-  }
+  const userString = localStorage.getItem('currentUser');
+  return userString ? JSON.parse(userString) : null;
+};
 
-  return auth.currentUser ? {
-    id: auth.currentUser.uid,
-    email: auth.currentUser.email,
-    displayName: auth.currentUser.displayName
-  } : null;
+// 사용자 ID로 사용자 데이터 가져오기
+export const getUserById = async (userId) => {
+  try {
+    return await firebaseGetUserById(userId);
+  } catch (error) {
+    console.error(`사용자 ID ${userId}의 데이터를 가져오는데 실패했습니다:`, error);
+    throw error;
+  }
 };
 
 // 사용자 즐겨찾기 가져오기
 export const getUserFavorites = async (userId) => {
-  if (USE_MOCK_DATA) {
-    // 로컬 스토리지에서 즐겨찾기 가져오기
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const favorites = JSON.parse(
-          localStorage.getItem("favorites") || "[]"
-        );
-        resolve(favorites);
-      }, 300);
-    });
-  }
-
   try {
-    // Firestore에서 사용자 즐겨찾기 가져오기
-    const favorites = await getCollection(COLLECTIONS.FAVORITES, {
-      filters: [
-        { field: 'userId', operator: '==', value: userId }
-      ],
-      orderByField: 'createdAt',
-      orderDirection: 'desc'
-    });
-    
-    // festivalId만 추출하여 반환
-    return favorites.map(favorite => favorite.festivalId);
+    const favorites = await getFavorites(userId);
+    return favorites;
   } catch (error) {
     console.error("즐겨찾기 데이터를 가져오는데 실패했습니다:", error);
     throw error;
@@ -167,43 +66,19 @@ export const getUserFavorites = async (userId) => {
 
 // 즐겨찾기 추가
 export const addFavorite = async (userId, festivalId) => {
-  if (USE_MOCK_DATA) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const favorites = JSON.parse(
-          localStorage.getItem("favorites") || "[]"
-        );
-        if (!favorites.includes(festivalId)) {
-          favorites.push(festivalId);
-          localStorage.setItem(
-            "favorites",
-            JSON.stringify(favorites)
-          );
-        }
-        resolve(favorites);
-      }, 300);
-    });
-  }
-
   try {
-    // 이미 즐겨찾기에 있는지 확인
-    const existingFavorites = await getCollection(COLLECTIONS.FAVORITES, {
-      filters: [
-        { field: 'userId', operator: '==', value: userId },
-        { field: 'festivalId', operator: '==', value: festivalId }
-      ]
-    });
-
-    // 이미 존재하지 않는 경우에만 추가
-    if (existingFavorites.length === 0) {
-      await addDocument(COLLECTIONS.FAVORITES, {
-        userId,
-        festivalId,
-        createdAt: new Date().toISOString()
-      });
+    await addFirebaseFavorite(userId, festivalId);
+    
+    // 로컬 스토리지 업데이트
+    const userString = localStorage.getItem('currentUser');
+    if (userString) {
+      const user = JSON.parse(userString);
+      if (!user.faves.includes(festivalId)) {
+        user.faves.push(festivalId);
+        localStorage.setItem('currentUser', JSON.stringify(user));
+      }
     }
-
-    // 업데이트된 즐겨찾기 목록 반환
+    
     return await getUserFavorites(userId);
   } catch (error) {
     console.error("즐겨찾기 추가에 실패했습니다:", error);
@@ -213,39 +88,17 @@ export const addFavorite = async (userId, festivalId) => {
 
 // 즐겨찾기 제거
 export const removeFavorite = async (userId, festivalId) => {
-  if (USE_MOCK_DATA) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const favorites = JSON.parse(
-          localStorage.getItem("favorites") || "[]"
-        );
-        const updatedFavorites = favorites.filter(
-          (id) => id !== festivalId
-        );
-        localStorage.setItem(
-          "favorites",
-          JSON.stringify(updatedFavorites)
-        );
-        resolve(updatedFavorites);
-      }, 300);
-    });
-  }
-
   try {
-    // 해당 즐겨찾기 항목 찾기
-    const existingFavorites = await getCollection(COLLECTIONS.FAVORITES, {
-      filters: [
-        { field: 'userId', operator: '==', value: userId },
-        { field: 'festivalId', operator: '==', value: festivalId }
-      ]
-    });
+    await removeFirebaseFavorite(userId, festivalId);
 
-    // 존재하는 경우 삭제
-    if (existingFavorites.length > 0) {
-      await deleteDocument(COLLECTIONS.FAVORITES, existingFavorites[0].id);
+    // 로컬 스토리지 업데이트
+    const userString = localStorage.getItem('currentUser');
+    if (userString) {
+      const user = JSON.parse(userString);
+      user.faves = user.faves.filter(id => id !== festivalId);
+      localStorage.setItem('currentUser', JSON.stringify(user));
     }
 
-    // 업데이트된 즐겨찾기 목록 반환
     return await getUserFavorites(userId);
   } catch (error) {
     console.error("즐겨찾기 제거에 실패했습니다:", error);
@@ -253,69 +106,23 @@ export const removeFavorite = async (userId, festivalId) => {
   }
 };
 
-// 사용자 알림 설정 가져오기
-export const getUserNotificationSettings = async (userId) => {
-  if (USE_MOCK_DATA) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const settings = JSON.parse(
-          localStorage.getItem("notificationSettings") ||
-            JSON.stringify({
-              enabled: true,
-              festivalUpdates: true,
-              artistUpdates: true,
-              newFestivals: true,
-            })
-        );
-        resolve(settings);
-      }, 300);
-    });
-  }
-
+// 사용자 회원가입
+export const registerUser = async (email, password, displayName) => {
   try {
-    // Firestore에서 사용자 문서 가져오기
-    const user = await getDocument(COLLECTIONS.USERS, userId);
-    
-    // 알림 설정이 없는 경우 기본값 반환
-    if (!user.notificationSettings) {
-      return {
-        enabled: true,
-        festivalUpdates: true,
-        artistUpdates: true,
-        newFestivals: true
-      };
-    }
-    
-    return user.notificationSettings;
-  } catch (error) {
-    console.error("알림 설정을 가져오는데 실패했습니다:", error);
-    throw error;
-  }
-};
+    // 이 프로젝트는 email/password 회원가입이 아닌 username 기반 로그인만 하므로,
+    // loginUser 함수를 기반으로 간단하게 구현합니다. (실제로는 같은 기능을 수행함)
+    const user = await firebaseLoginUser(displayName);
 
-// 사용자 알림 설정 업데이트
-export const updateUserNotificationSettings = async (userId, settings) => {
-  if (USE_MOCK_DATA) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        localStorage.setItem(
-          "notificationSettings",
-          JSON.stringify(settings)
-        );
-        resolve(settings);
-      }, 300);
-    });
-  }
+    // 브라우저에 사용자 정보 저장
+    localStorage.setItem('currentUser', JSON.stringify({
+      id: user.id,
+      name: user.name,
+      faves: user.faves || []
+    }));
 
-  try {
-    // Firestore 사용자 문서 업데이트
-    await updateDocument(COLLECTIONS.USERS, userId, {
-      notificationSettings: settings
-    });
-    
-    return settings;
+    return user;
   } catch (error) {
-    console.error("알림 설정 업데이트에 실패했습니다:", error);
+    console.error("회원가입에 실패했습니다:", error);
     throw error;
   }
 };
