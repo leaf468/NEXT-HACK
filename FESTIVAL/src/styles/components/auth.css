@@ -147,6 +147,112 @@
   text-decoration: underline;
 }
 
+/* 로그인 팝업 스타일 */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(3px);
+}
+
+.popup-content {
+  width: 90%;
+  max-width: 400px;
+  background-color: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  animation: popup-fade-in 0.3s ease-out;
+}
+
+@keyframes popup-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.popup-content h2 {
+  text-align: center;
+  color: var(--primary-color);
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  position: relative;
+}
+
+.popup-content h2:after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 3px;
+  background-color: var(--primary-color);
+  border-radius: 3px;
+}
+
+.identifier-type-toggle {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.identifier-type-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+}
+
+.random-code-container {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.generate-code-btn {
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.generate-code-btn:hover {
+  background-color: var(--secondary-color-dark);
+}
+
+.close-popup-btn {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.7rem;
+  width: 100%;
+  margin-top: 1rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+
+.close-popup-btn:hover {
+  background-color: #f5f5f5;
+  border-color: #ccc;
+}
+
 /* 반응형 스타일 */
 @media (max-width: 768px) {
   .auth-form-container {
@@ -155,6 +261,10 @@
 
   .auth-title {
     font-size: 1.75rem;
+  }
+
+  .popup-content {
+    padding: 1.5rem;
   }
 }
 
@@ -170,5 +280,14 @@
   .auth-title {
     font-size: 1.5rem;
     margin-bottom: 1.5rem;
+  }
+
+  .popup-content {
+    width: 95%;
+    padding: 1.25rem;
+  }
+
+  .popup-content h2 {
+    font-size: 1.5rem;
   }
 }

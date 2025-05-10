@@ -9,7 +9,7 @@ const Navbar = () => {
     const location = useLocation();
     const { getUnreadCount, showNotification, setShowNotification } =
         useContext(NotificationContext);
-    const { isLoggedIn, user, setIsLoggedIn, setUser } = useContext(UserContext);
+    const { isLoggedIn, user, setShowLoginPopup, logout } = useContext(UserContext);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     // 현재 경로를 기준으로 활성화된 링크 확인
@@ -82,6 +82,16 @@ const Navbar = () => {
                     </Link>
 
                     <Link
+                        to="/calendar"
+                        className={`nav-link ${
+                            isActive("/calendar") ? "active" : ""
+                        }`}
+                        onClick={handleLinkClick}
+                    >
+                        일정
+                    </Link>
+
+                    <Link
                         to="/favorites"
                         className={`nav-link ${
                             isActive("/favorites") ? "active" : ""
@@ -112,15 +122,13 @@ const Navbar = () => {
                         <div className="nav-link user-menu">
                             <span>
                                 <FaUser style={{ marginRight: "5px" }} />
-                                {user?.displayName || "사용자"}
+                                {user?.name || "사용자"}
                             </span>
                             <button
                                 className="logout-button"
                                 onClick={() => {
                                     // 로그아웃 처리
-                                    setIsLoggedIn(false);
-                                    setUser(null);
-                                    localStorage.removeItem('currentUser');
+                                    logout();
                                     handleLinkClick();
                                 }}
                             >
@@ -128,16 +136,16 @@ const Navbar = () => {
                             </button>
                         </div>
                     ) : (
-                        <Link
-                            to="/auth"
-                            className={`nav-link ${
-                                isActive("/auth") ? "active" : ""
-                            }`}
-                            onClick={handleLinkClick}
+                        <button
+                            className="nav-link login-button"
+                            onClick={() => {
+                                setShowLoginPopup(true);
+                                handleLinkClick();
+                            }}
                         >
                             <FaUser style={{ marginRight: "5px" }} />
                             로그인
-                        </Link>
+                        </button>
                     )}
                 </div>
 

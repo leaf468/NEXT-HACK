@@ -2,152 +2,283 @@
 .favorites-page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 30px;
+  background-color: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.favorites-header {
+  text-align: center;
+  margin-bottom: 30px;
 }
 
 .favorites-page h1 {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
+  font-size: 2.2rem;
+  margin-bottom: 0.8rem;
   color: var(--primary-color);
+  position: relative;
+  display: inline-block;
+}
+
+.favorites-page h1::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 4px;
+  background-color: var(--primary-color);
+  border-radius: 2px;
 }
 
 .page-description {
   color: #666;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
+  text-align: center;
+  font-size: 1.1rem;
 }
 
 .favorites-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 25px;
 }
 
 /* 상태 필터 버튼 */
 .status-filters {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  justify-content: center;
 }
 
 .status-filter-btn {
-  padding: 8px 16px;
-  border-radius: 20px;
-  background-color: #f0f0f0;
-  color: #666;
+  padding: 10px 20px;
+  border-radius: 25px;
+  background-color: #f5f5f5;
+  color: #555;
   border: none;
   cursor: pointer;
-  transition: all 0.2s;
-  font-weight: 500;
+  transition: all 0.3s;
+  font-weight: 600;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .status-filter-btn:hover {
-  background-color: #e0e0e0;
+  background-color: #e8e8e8;
+  transform: translateY(-2px);
 }
 
 .status-filter-btn.active {
   background-color: var(--primary-color);
   color: white;
+  box-shadow: 0 4px 8px rgba(82, 113, 255, 0.25);
 }
 
 /* 정렬 컨트롤 */
 .sort-controls {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 12px;
+  margin-bottom: 25px;
+  justify-content: center;
 }
 
 .sort-label {
-  font-weight: 500;
-  color: #666;
+  font-weight: 600;
+  color: #555;
+  font-size: 0.95rem;
 }
 
 .sort-select {
-  padding: 6px 10px;
-  border-radius: 4px;
+  padding: 8px 14px;
+  border-radius: 8px;
   border: 1px solid var(--border-color);
   background-color: white;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s;
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(82, 113, 255, 0.15);
 }
 
 /* 비어있는 즐겨찾기 상태 */
 .empty-favorites,
 .empty-filtered-favorites {
   background-color: white;
-  border-radius: 8px;
-  padding: 30px;
+  border-radius: 12px;
+  padding: 40px;
   text-align: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   color: #666;
+  margin: 30px auto;
+  max-width: 500px;
+  border: 1px dashed #e0e0e0;
 }
 
 .empty-favorites p:first-child,
 .empty-filtered-favorites p:first-child {
-  font-size: 1.2rem;
-  font-weight: 500;
-  margin-bottom: 10px;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 15px;
   color: #333;
 }
 
 .empty-favorites p:last-child {
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  font-size: 1.05rem;
+  color: #777;
 }
 
 .explore-btn {
   display: inline-block;
-  padding: 10px 20px;
+  padding: 12px 24px;
   background-color: var(--primary-color);
   color: white;
-  border-radius: 6px;
+  border-radius: 30px;
   text-decoration: none;
-  font-weight: 500;
-  margin-top: 15px;
-  transition: background-color 0.2s;
+  font-weight: 600;
+  margin-top: 20px;
+  transition: all 0.3s;
+  box-shadow: 0 4px 10px rgba(82, 113, 255, 0.25);
+  letter-spacing: 0.5px;
 }
 
 .explore-btn:hover {
   background-color: var(--primary-color-dark, #3a5cff);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(82, 113, 255, 0.3);
+}
+
+/* 카드 그리드 개선 */
+.favorites-page .card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 25px;
+  margin-top: 30px;
+}
+
+.favorites-page .festival-card {
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.favorites-page .festival-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+  border-color: var(--primary-color-light);
+}
+
+.favorites-page .festival-image {
+  height: 200px;
+}
+
+.favorites-page .festival-content {
+  padding: 20px;
+}
+
+.favorites-page .festival-name {
+  font-size: 1.3rem;
+  margin-bottom: 8px;
+}
+
+.favorites-page .festival-school {
+  font-size: 1rem;
+  margin-bottom: 15px;
+}
+
+.favorites-page .festival-detail {
+  margin-bottom: 8px;
+}
+
+.favorites-page .festival-artists {
+  margin-top: 15px;
 }
 
 /* 반응형 스타일 */
 @media (max-width: 768px) {
-  .favorites-page h1 {
-    font-size: 1.8rem;
+  .favorites-page {
+    padding: 25px;
   }
-  
+
+  .favorites-page h1 {
+    font-size: 2rem;
+    margin: 0 auto 20px;
+    text-align: center;
+  }
+
+  .favorites-page h1::after {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
   .status-filters {
     justify-content: center;
   }
-  
+
   .status-filter-btn {
-    padding: 6px 12px;
+    padding: 8px 16px;
     font-size: 0.9rem;
   }
-  
+
   .sort-controls {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .favorites-page .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
   }
 }
 
 @media (max-width: 576px) {
   .favorites-page {
-    padding: 15px;
+    padding: 20px;
+    border-radius: 10px;
   }
-  
+
   .favorites-page h1 {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
   }
-  
+
+  .page-description {
+    font-size: 1rem;
+  }
+
   .status-filter-btn {
     flex: 1;
     text-align: center;
-    padding: 6px 8px;
-    font-size: 0.85rem;
+    padding: 8px 10px;
+    font-size: 0.9rem;
   }
-  
+
+  .sort-controls {
+    flex-wrap: wrap;
+  }
+
   .empty-favorites,
   .empty-filtered-favorites {
-    padding: 20px;
+    padding: 30px 20px;
+    margin: 20px auto;
+  }
+
+  .favorites-page .card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .explore-btn {
+    padding: 10px 20px;
+    font-size: 0.95rem;
   }
 }

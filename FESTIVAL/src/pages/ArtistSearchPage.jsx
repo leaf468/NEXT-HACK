@@ -83,7 +83,10 @@ const ArtistSearchPage = () => {
             </section>
 
             <section className="artists-section">
-                <h2>아티스트 목록</h2>
+                <h2>
+                    <i className="fa fa-music" style={{ color: 'var(--primary-color)' }}></i>
+                    아티스트 목록
+                </h2>
                 <ArtistList
                     artists={filteredArtists}
                     onArtistSelect={handleArtistSelect}
@@ -93,6 +96,7 @@ const ArtistSearchPage = () => {
             <section id="festivals-section" className="festivals-section">
                 <div className="festivals-header">
                     <h2>
+                        <i className="fa fa-calendar" style={{ color: 'var(--primary-color)' }}></i>
                         {selectedArtist
                             ? `'${selectedArtist}'의 출연 축제`
                             : "모든 축제"}
