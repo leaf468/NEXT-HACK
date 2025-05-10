@@ -196,16 +196,25 @@ export const loginUser = async (username) => {
     const q = query(usersRef, where("name", "==", username));
     const userSnapshot = await getDocs(q);
 
-    // If user exists, return user data
+    // If user exists, update last login and return user data
     if (!userSnapshot.empty) {
-      const userData = userSnapshot.docs[0].data();
-      return { id: userSnapshot.docs[0].id, ...userData };
+      const userDoc = userSnapshot.docs[0];
+      const userData = userDoc.data();
+
+      // Update lastLogin timestamp
+      await updateDoc(doc(db, "users", userDoc.id), {
+        lastLogin: new Date()
+      });
+
+      return { id: userDoc.id, ...userData, lastLogin: new Date() };
     }
 
     // Create new user if not exists
     const newUserData = {
       name: username,
-      faves: []  // 새 사용자는 빈 즐겨찾기 배열로 초기화
+      faves: [],  // 새 사용자는 빈 즐겨찾기 배열로 초기화
+      createdAt: new Date(),
+      lastLogin: new Date()
     };
 
     // 실제로 Firestore에 사용자 데이터 저장
@@ -224,12 +233,31 @@ export const getUserById = async (userId) => {
   try {
     const userRef = doc(db, "users", userId);
     const userSnap = await getDoc(userRef);
-    
+
     if (!userSnap.exists()) {
       return null;
     }
-    
-    return { id: userSnap.id, ...userSnap.data() };
+
+    // Get user data
+    const userData = userSnap.data();
+
+    // Get and load favorite festivals if any
+    let favoritesFull = [];
+    if (userData.faves && userData.faves.length > 0) {
+      // Optionally load the full festival details
+      const favoritePromises = userData.faves.map(festivalId =>
+        getFestivalById(festivalId)
+      );
+      favoritesFull = await Promise.all(favoritePromises);
+      // Filter out any null values (festivals that may have been deleted)
+      favoritesFull = favoritesFull.filter(Boolean);
+    }
+
+    return {
+      id: userSnap.id,
+      ...userData,
+      favoritesFull // Include full festival details
+    };
   } catch (error) {
     console.error("Error getting user:", error);
     throw error;

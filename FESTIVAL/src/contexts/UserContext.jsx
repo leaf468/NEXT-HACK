@@ -3,6 +3,7 @@ import {
     getUserFavorites,
     addFavorite,
     removeFavorite,
+    syncUserData,
 } from "../services/userService";
 
 export const UserContext = createContext();
@@ -15,21 +16,35 @@ export const UserProvider = ({ children }) => {
 
     // 로컬 스토리지에서 사용자 정보 불러오기
     useEffect(() => {
-        const savedUser = localStorage.getItem("festivalUser");
-        if (savedUser) {
-            try {
-                const parsedUser = JSON.parse(savedUser);
-                setUser(parsedUser);
-                setIsLoggedIn(true);
-                // 사용자가 방문한 적이 있음을 표시
-                localStorage.setItem("festivalUserVisited", "true");
-            } catch (e) {
-                console.error("저장된 사용자 정보를 불러오는데 실패했습니다:", e);
+        const loadUserData = async () => {
+            const savedUser = localStorage.getItem("festivalUser");
+            if (savedUser) {
+                try {
+                    const parsedUser = JSON.parse(savedUser);
+                    setUser(parsedUser);
+                    setIsLoggedIn(true);
+
+                    // 사용자가 방문한 적이 있음을 표시
+                    localStorage.setItem("festivalUserVisited", "true");
+
+                    // Firebase와 로컬 데이터 동기화
+                    const syncedUser = await syncUserData();
+                    if (syncedUser) {
+                        setUser(syncedUser);
+                        console.log("사용자 데이터가 Firebase와 동기화되었습니다:", syncedUser);
+                    } else {
+                        console.error("Firebase 동기화 실패");
+                    }
+                } catch (e) {
+                    console.error("저장된 사용자 정보를 불러오는데 실패했습니다:", e);
+                }
+            } else {
+                // 처음 방문한 경우 로그인 팝업 표시
+                setShowLoginPopup(true);
             }
-        } else {
-            // 처음 방문한 경우 로그인 팝업 표시
-            setShowLoginPopup(true);
-        }
+        };
+
+        loadUserData();
     }, []);
 
     // 로컬 스토리지에서 즐겨찾기 불러오기 (로그인 없이도 동작하게)

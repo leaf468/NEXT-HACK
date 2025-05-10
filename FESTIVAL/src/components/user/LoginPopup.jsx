@@ -1,5 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import { UserContext } from "../../contexts/UserContext";
+import { loginUser } from "../../services/userService";
 import "../../styles/components/auth.css";
 
 const LoginPopup = ({ isOpen, onClose }) => {
@@ -20,7 +21,7 @@ const LoginPopup = ({ isOpen, onClose }) => {
     setIdentifier("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -44,24 +45,17 @@ const LoginPopup = ({ isOpen, onClose }) => {
     }
 
     try {
-      // Create unique user ID from name + identifier
-      const userId = `${name}_${identifier}`;
-      
-      // Create user object
-      const user = {
-        id: userId,
-        name: name,
-        identifier: identifier,
-        identifierType: identifierType
-      };
+      // Create unique username from name + identifier
+      const username = `${name}_${identifier}`;
 
-      // Save to localStorage for persistence
-      localStorage.setItem("festivalUser", JSON.stringify(user));
-      
-      // Update context
+      // Use the loginUser function from userService
+      // This will handle Firebase authentication and localStorage update
+      const user = await loginUser(username);
+
+      // Update context with the returned user from Firebase
       setUser(user);
       setIsLoggedIn(true);
-      
+
       // Close popup
       if (onClose) onClose();
     } catch (err) {
