@@ -7,6 +7,7 @@ import {
     searchFestivalsByRegion,
     filterFestivalsByStatus,
 } from "../services/festivalService";
+import { getFestivalStatus, getDaysRemaining } from "../utils/dateUtils";
 
 export const FestivalContext = createContext();
 
@@ -23,14 +24,32 @@ export const FestivalProvider = ({ children }) => {
         showOnlyActive: true,
     });
 
+    // 축제 데이터에 상태 및 D-day 정보 추가
+    const processFestivalData = (festivals) => {
+        return festivals.map(festival => {
+            const festivalStatus = getFestivalStatus(festival.startDate, festival.endDate);
+            const dDays = festival.startDate ? getDaysRemaining(festival.startDate) : null;
+
+            return {
+                ...festival,
+                status: festivalStatus.status,
+                statusLabel: festivalStatus.label,
+                dDays: dDays,
+                festivalStatus: festivalStatus
+            };
+        });
+    };
+
     // 모든 축제 데이터 불러오기
     useEffect(() => {
         const loadFestivals = async () => {
             try {
                 setLoading(true);
                 const data = await fetchFestivals();
-                setFestivals(data);
-                setFilteredFestivals(data);
+                // 축제 데이터에 상태 및 D-day 정보 추가
+                const processedData = processFestivalData(data);
+                setFestivals(processedData);
+                setFilteredFestivals(processedData);
             } catch (err) {
                 setError("축제 정보를 불러오는데 실패했습니다.");
                 console.error(err);
@@ -106,6 +125,9 @@ export const FestivalProvider = ({ children }) => {
             // 축제 상태(진행 중/종료) 필터 적용
             results = filterFestivalsByStatus(results, filters.showOnlyActive);
             console.log("After status filter (showOnlyActive:", filters.showOnlyActive, "):", results.length);
+
+            // 축제 데이터에 상태와 D-day 정보 추가
+            results = processFestivalData(results);
 
             setFilteredFestivals(results);
         } catch (err) {

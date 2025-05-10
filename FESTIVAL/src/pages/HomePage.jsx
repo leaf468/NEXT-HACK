@@ -174,6 +174,23 @@ const HomePage = () => {
             </section>
 
             <section className="filters-section">
+                <div className="filters-header">
+                    <div className="toggle-container">
+                        <button
+                            className={`toggle-btn ${filters.showOnlyActive ? 'active' : ''}`}
+                            onClick={() => updateFilters({ showOnlyActive: true })}
+                        >
+                            진행중인 축제
+                        </button>
+                        <button
+                            className={`toggle-btn ${!filters.showOnlyActive ? 'active' : ''}`}
+                            onClick={() => updateFilters({ showOnlyActive: false })}
+                        >
+                            종료된 축제
+                        </button>
+                    </div>
+                </div>
+
                 <Filter
                     onDateFilter={handleDateFilter}
                     onSchoolFilter={handleSchoolFilter}
@@ -239,20 +256,6 @@ const HomePage = () => {
             </section>
 
             <section className="festivals-section">
-                <div className="toggle-container">
-                    <button
-                        className={`toggle-btn ${filters.showOnlyActive ? 'active' : ''}`}
-                        onClick={() => updateFilters({ showOnlyActive: true })}
-                    >
-                        진행중인 축제
-                    </button>
-                    <button
-                        className={`toggle-btn ${!filters.showOnlyActive ? 'active' : ''}`}
-                        onClick={() => updateFilters({ showOnlyActive: false })}
-                    >
-                        종료된 축제
-                    </button>
-                </div>
 
                 {loading ? (
                     <div className="loading-spinner">로딩 중...</div>
@@ -261,7 +264,25 @@ const HomePage = () => {
                 ) : filteredFestivals.length > 0 ? (
                     <FestivalList
                         festivals={[...filteredFestivals]
-                            .sort((a, b) => a.name.localeCompare(b.name, 'ko'))}
+                            .sort((a, b) => {
+                                // 진행중인 축제 토글이 활성화된 경우 D-day 기준 정렬
+                                if (filters.showOnlyActive) {
+                                    // D-day 값 계산 (getDaysRemaining 함수 사용)
+                                    const dDayA = a.startDate ? (a.status === "upcoming" ?
+                                        (a.dDays || Number(a.festivalStatus?.label?.replace('D-', '')) || 999) : 0) : 999;
+                                    const dDayB = b.startDate ? (b.status === "upcoming" ?
+                                        (b.dDays || Number(b.festivalStatus?.label?.replace('D-', '')) || 999) : 0) : 999;
+
+                                    // D-day 값으로 정렬 (작은 값이 먼저)
+                                    if (dDayA !== dDayB) {
+                                        return dDayA - dDayB;
+                                    }
+                                }
+
+                                // 기본 정렬은 학교명 가나다순
+                                return a.name.localeCompare(b.name, 'ko');
+                            })
+                        }
                     />
                 ) : (
                     <div className="no-festivals">

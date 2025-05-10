@@ -1898,10 +1898,20 @@ input[type="date"].filter-input {
 }
 
 /* 축제 토글 스타일 */
+.filters-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
 .toggle-container {
     display: flex;
     justify-content: center;
     margin-bottom: 20px;
+}
+
+.filters-header .toggle-container {
+    margin-bottom: 0;
 }
 
 .toggle-btn {
