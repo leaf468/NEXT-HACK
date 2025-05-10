@@ -106,7 +106,7 @@ const FestivalCard = ({ festival }) => {
                                 .slice(0, 3)
                                 .map((artist, index) => (
                                     <span key={index} className="artist-tag">
-                                        {artist.name}
+                                        {artist.name === "name" ? "미정" : artist.name}
                                     </span>
                                 ))}
                             {festival.artists.length > 3 && (

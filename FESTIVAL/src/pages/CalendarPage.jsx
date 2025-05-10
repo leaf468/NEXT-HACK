@@ -179,8 +179,8 @@ function CalendarPage() {
                         festival.artists.length > 0
                     ) {
                         festival.artists.forEach((artist) => {
-                            // 유효한 아티스트 객체인지 확인
-                            if (artist && typeof artist === "object") {
+                            // 유효한 아티스트 객체인지 확인, "name"인 아티스트는 제외
+                            if (artist && typeof artist === "object" && artist.name !== "name") {
                                 const artistName = artist.name || "이름 없음";
                                 const existingArtist = events[
                                     dateStr
@@ -248,7 +248,7 @@ function CalendarPage() {
                     festival.artists.length > 0
                 ) {
                     festival.artists.forEach((artist) => {
-                        if (artist && typeof artist === "object") {
+                        if (artist && typeof artist === "object" && artist.name !== "name") {
                             const artistName = artist.name || "이름 없음";
                             const existingArtist = events[dateStr].artists.find(
                                 (a) => a.name === artistName
@@ -362,7 +362,7 @@ function CalendarPage() {
                         return [];
 
                     return festival.artists.map((artist) => {
-                        if (!artist || typeof artist !== "object") return null;
+                        if (!artist || typeof artist !== "object" || artist.name === "name") return null;
 
                         return {
                             name: artist.name || "이름 없음",
@@ -434,7 +434,7 @@ function CalendarPage() {
                     return [];
 
                 return festival.artists.map((artist) => {
-                    if (!artist || typeof artist !== "object") return null;
+                    if (!artist || typeof artist !== "object" || artist.name === "name") return null;
 
                     return {
                         name: artist.name || "이름 없음",

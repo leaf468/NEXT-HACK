@@ -22,14 +22,16 @@ const ArtistList = ({ artists, onArtistSelect }) => {
 
     return (
         <div className="artist-grid">
-            {artists.map((artist) => (
-                <ArtistCard
-                    key={artist.id}
-                    artist={artist}
-                    festivalCount={getArtistFestivalCount(artist.name)}
-                    onClick={() => onArtistSelect(artist.name)}
-                />
-            ))}
+            {artists
+                .filter(artist => artist.name !== "name")
+                .map((artist) => (
+                    <ArtistCard
+                        key={artist.id}
+                        artist={artist}
+                        festivalCount={getArtistFestivalCount(artist.name)}
+                        onClick={() => onArtistSelect(artist.name)}
+                    />
+                ))}
         </div>
     );
 };

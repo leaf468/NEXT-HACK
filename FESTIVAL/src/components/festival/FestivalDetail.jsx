@@ -216,7 +216,7 @@ const FestivalDetail = ({ festival }) => {
                                         </div>
                                     )}
                                 </div>
-                                <h3 className="artist-name">{artist.name}</h3>
+                                <h3 className="artist-name">{artist.name === "name" ? "미정" : artist.name}</h3>
                                 {(artist.time || artist.performanceDate) && (
                                     <p className="artist-time">{artist.time || artist.performanceDate}</p>
                                 )}
