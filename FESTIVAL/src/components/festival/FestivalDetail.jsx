@@ -18,19 +18,24 @@ const FestivalDetail = ({ festival }) => {
         useContext(UserContext);
     const { displayNotification } = useContext(NotificationContext);
 
+    // 대학 이름을 가져오는 함수 (universityName 또는 school 필드 사용)
+    const getUniversityName = () => {
+        return festival.universityName || festival.school || '대학 정보 없음';
+    };
+
     const handleFavoriteToggle = () => {
         if (isFavorite(festival.id)) {
             removeFromFavorites(festival.id);
             displayNotification(
                 "즐겨찾기 삭제",
-                `${festival.school} ${festival.name}이(가) 즐겨찾기에서 삭제되었습니다.`,
+                `${getUniversityName()} ${festival.name}이(가) 즐겨찾기에서 삭제되었습니다.`,
                 "info"
             );
         } else {
             addToFavorites(festival.id);
             displayNotification(
                 "즐겨찾기 추가",
-                `${festival.school} ${festival.name}이(가) 즐겨찾기에 추가되었습니다.`,
+                `${getUniversityName()} ${festival.name}이(가) 즐겨찾기에 추가되었습니다.`,
                 "success"
             );
         }
@@ -40,8 +45,8 @@ const FestivalDetail = ({ festival }) => {
         if (navigator.share) {
             navigator
                 .share({
-                    title: `${festival.school} ${festival.name}`,
-                    text: `${festival.school} ${festival.name} - ${formatDate(
+                    title: `${getUniversityName()} ${festival.name}`,
+                    text: `${getUniversityName()} ${festival.name} - ${formatDate(
                         festival.startDate
                     )} ~ ${formatDate(festival.endDate)}`,
                     url: encodeURI(window.location.href),
@@ -87,7 +92,7 @@ const FestivalDetail = ({ festival }) => {
                 <div className="festival-title-section">
                     <h1 className="festival-detail-name">{festival.name}</h1>
                     <h2 className="festival-detail-school">
-                        {festival.school}
+                        {getUniversityName()}
                     </h2>
 
                     <div className="festival-detail-actions">
@@ -124,15 +129,15 @@ const FestivalDetail = ({ festival }) => {
                 </div>
 
                 <div className="festival-image-container">
-                    {festival.image ? (
+                    {festival.imageUrl || festival.image ? (
                         <img
-                            src={festival.image}
-                            alt={`${festival.school} ${festival.name} 포스터`}
+                            src={festival.imageUrl || festival.image}
+                            alt={`${getUniversityName()} ${festival.name} 포스터`}
                             className="festival-detail-image"
                         />
                     ) : (
                         <div className="festival-detail-placeholder">
-                            <span>{festival.school.charAt(0)}</span>
+                            <span>{getUniversityName().charAt(0)}</span>
                         </div>
                     )}
                 </div>
@@ -151,13 +156,15 @@ const FestivalDetail = ({ festival }) => {
                     <p className="subtext">{festival.time}</p>
                 </div>
 
-                <div className="info-item">
-                    <h3>
-                        <FaMapMarkerAlt className="icon" />
-                        장소
-                    </h3>
-                    <p>{festival.location.address}</p>
-                </div>
+                {festival.location && festival.location.address && (
+                    <div className="info-item">
+                        <h3>
+                            <FaMapMarkerAlt className="icon" />
+                            장소
+                        </h3>
+                        <p>{festival.location.address}</p>
+                    </div>
+                )}
             </div>
 
             <div className="festival-detail-section">
@@ -170,9 +177,9 @@ const FestivalDetail = ({ festival }) => {
                     <div className="artists-grid">
                         {festival.artists.map((artist, index) => (
                             <div key={index} className="artist-item">
-                                {artist.image ? (
+                                {artist.imageUrl || artist.image ? (
                                     <img
-                                        src={artist.image}
+                                        src={artist.imageUrl || artist.image}
                                         alt={artist.name}
                                         className="artist-image"
                                     />
@@ -182,8 +189,8 @@ const FestivalDetail = ({ festival }) => {
                                     </div>
                                 )}
                                 <h3 className="artist-name">{artist.name}</h3>
-                                {artist.time && (
-                                    <p className="artist-time">{artist.time}</p>
+                                {(artist.time || artist.performanceDate) && (
+                                    <p className="artist-time">{artist.time || artist.performanceDate}</p>
                                 )}
                             </div>
                         ))}

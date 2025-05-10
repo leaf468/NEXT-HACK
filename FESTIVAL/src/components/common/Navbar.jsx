@@ -1,13 +1,15 @@
 import React, { useContext, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FaBell, FaHeart, FaSearch, FaBars, FaTimes } from "react-icons/fa";
+import { FaBell, FaHeart, FaSearch, FaBars, FaTimes, FaUser } from "react-icons/fa";
 import { NotificationContext } from "../../contexts/NotificationContext";
+import { UserContext } from "../../contexts/UserContext";
 import NotificationList from "../user/NotificationList";
 
 const Navbar = () => {
     const location = useLocation();
     const { getUnreadCount, showNotification, setShowNotification } =
         useContext(NotificationContext);
+    const { isLoggedIn, user, setIsLoggedIn, setUser } = useContext(UserContext);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     // 현재 경로를 기준으로 활성화된 링크 확인
@@ -105,6 +107,38 @@ const Navbar = () => {
                             </span>
                         )}
                     </button>
+
+                    {isLoggedIn ? (
+                        <div className="nav-link user-menu">
+                            <span>
+                                <FaUser style={{ marginRight: "5px" }} />
+                                {user?.displayName || "사용자"}
+                            </span>
+                            <button
+                                className="logout-button"
+                                onClick={() => {
+                                    // 로그아웃 처리
+                                    setIsLoggedIn(false);
+                                    setUser(null);
+                                    localStorage.removeItem('currentUser');
+                                    handleLinkClick();
+                                }}
+                            >
+                                로그아웃
+                            </button>
+                        </div>
+                    ) : (
+                        <Link
+                            to="/auth"
+                            className={`nav-link ${
+                                isActive("/auth") ? "active" : ""
+                            }`}
+                            onClick={handleLinkClick}
+                        >
+                            <FaUser style={{ marginRight: "5px" }} />
+                            로그인
+                        </Link>
+                    )}
                 </div>
 
                 {/* 알림 드롭다운 */}

@@ -5,11 +5,13 @@ import { UserProvider } from "./contexts/UserContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import Navbar from "./components/common/Navbar";
 import Footer from "./components/common/Footer";
+import ProtectedRoute from "./components/user/ProtectedRoute";
 import HomePage from "./pages/HomePage";
 import FestivalDetailPage from "./pages/FestivalDetailPage";
 import ArtistSearchPage from "./pages/ArtistSearchPage";
 import SchoolSearchPage from "./pages/SchoolSearchPage";
 import FavoritesPage from "./pages/FavoritesPage";
+import AuthPage from "./pages/AuthPage";
 import "./styles/global.css";
 
 function App() {
@@ -37,7 +39,15 @@ function App() {
                                     />
                                     <Route
                                         path="/favorites"
-                                        element={<FavoritesPage />}
+                                        element={
+                                            <ProtectedRoute>
+                                                <FavoritesPage />
+                                            </ProtectedRoute>
+                                        }
+                                    />
+                                    <Route
+                                        path="/auth"
+                                        element={<AuthPage />}
                                     />
                                 </Routes>
                             </main>

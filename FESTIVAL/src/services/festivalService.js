@@ -1,32 +1,42 @@
-import { 
-  getCollection, 
-  getDocument, 
-  addDocument, 
-  updateDocument, 
-  COLLECTIONS 
+import {
+  getCollection,
+  getDocument,
+  addDocument,
+  updateDocument,
+  COLLECTIONS
 } from './api';
+import { Festival, Artist } from '../models';
 import { formatDate, isDateInRange } from "../utils/dateUtils";
-import mockFestivals from "../data/festivals";
 
-// API 서버가 없는 경우를 위한 모의 데이터 사용 플래그
-const USE_MOCK_DATA = true;
+// Firebase 데이터를 사용하도록 설정
+const USE_MOCK_DATA = false;
 
 // 모든 축제 데이터 가져오기
 export const fetchFestivals = async () => {
   if (USE_MOCK_DATA) {
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve(mockFestivals);
+        // 모의 데이터를 Festival 모델 형식으로 변환
+        const festivals = mockFestivals.map(festival =>
+          new Festival(festival.id, festival)
+        );
+        resolve(festivals);
       }, 500); // 실제 API 호출처럼 약간의 지연 추가
     });
   }
 
   try {
     // Firestore에서 festivals 컬렉션의 모든 문서 가져오기
-    const festivals = await getCollection(COLLECTIONS.FESTIVALS, {
+    const festivalsData = await getCollection(COLLECTIONS.FESTIVALS, {
       orderByField: 'startDate',
       orderDirection: 'asc'
     });
+
+    // 데이터를 Festival 모델로 변환
+    const festivals = festivalsData.map(festival =>
+      new Festival(festival.id, festival)
+    );
+
     return festivals;
   } catch (error) {
     console.error("축제 데이터를 가져오는데 실패했습니다:", error);
@@ -39,8 +49,10 @@ export const fetchFestivalById = async (festivalId) => {
   if (USE_MOCK_DATA) {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
-        const festival = mockFestivals.find((f) => f.id === festivalId);
-        if (festival) {
+        const festivalData = mockFestivals.find((f) => f.id === festivalId);
+        if (festivalData) {
+          // 모의 데이터를 Festival 모델로 변환
+          const festival = new Festival(festivalData.id, festivalData);
           resolve(festival);
         } else {
           reject(
@@ -53,7 +65,11 @@ export const fetchFestivalById = async (festivalId) => {
 
   try {
     // Firestore에서 특정 ID의 festival 문서 가져오기
-    const festival = await getDocument(COLLECTIONS.FESTIVALS, festivalId);
+    const festivalData = await getDocument(COLLECTIONS.FESTIVALS, festivalId);
+
+    // 데이터를 Festival 모델로 변환
+    const festival = new Festival(festivalData.id, festivalData);
+
     return festival;
   } catch (error) {
     console.error(
@@ -69,28 +85,45 @@ export const searchFestivalsBySchool = async (schoolName, festivals = null) => {
   if (USE_MOCK_DATA || festivals) {
     // 로컬 필터링 (이미 전체 데이터가 있는 경우)
     const dataToFilter = festivals || mockFestivals;
-    return dataToFilter.filter((festival) =>
-      festival.school.toLowerCase().includes(schoolName.toLowerCase())
+    const filtered = dataToFilter.filter((festival) => {
+      const schoolField = festival.universityName || festival.school || '';
+      return schoolField.toLowerCase().includes(schoolName.toLowerCase());
+    });
+
+    // 만약 festivals가 이미 Festival 객체라면 그대로 반환, 아니면 변환
+    if (festivals && festivals[0] instanceof Festival) {
+      return filtered;
+    }
+
+    // 모의 데이터를 Festival 모델로 변환
+    return filtered.map(festival =>
+      festival instanceof Festival ? festival : new Festival(festival.id, festival)
     );
   }
 
   try {
     // Firestore에서 학교명으로 필터링하여 가져오기
-    const filteredFestivals = await getCollection(COLLECTIONS.FESTIVALS, {
+    const filteredFestivalsData = await getCollection(COLLECTIONS.FESTIVALS, {
       filters: [
         {
-          field: 'school',
+          field: 'universityName',
           operator: '>=',
           value: schoolName.toLowerCase()
         },
         {
-          field: 'school',
+          field: 'universityName',
           operator: '<=',
           value: schoolName.toLowerCase() + '\uf8ff'
         }
       ],
-      orderByField: 'school'
+      orderByField: 'universityName'
     });
+
+    // 데이터를 Festival 모델로 변환
+    const filteredFestivals = filteredFestivalsData.map(festival =>
+      new Festival(festival.id, festival)
+    );
+
     return filteredFestivals;
   } catch (error) {
     console.error("학교별 축제 검색에 실패했습니다:", error);

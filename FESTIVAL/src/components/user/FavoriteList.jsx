@@ -1,4 +1,5 @@
 import React, { useContext, useState } from "react";
+import { Link } from "react-router-dom";
 import { UserContext } from "../../contexts/UserContext";
 import { FestivalContext } from "../../contexts/FestivalContext";
 import FestivalCard from "../festival/FestivalCard";
@@ -14,9 +15,16 @@ const FavoriteList = () => {
         favorites.includes(festival.id)
     );
 
+    // 날짜 기준으로 정렬 (가장 가까운 축제가 먼저 표시되도록)
+    const sortedFavoriteFestivals = [...favoriteFestivals].sort((a, b) => {
+        const dateA = new Date(a.startDate);
+        const dateB = new Date(b.startDate);
+        return dateA - dateB;
+    });
+
     // 상태별 필터링
     const filteredFestivals = filterFestivalsByStatus(
-        favoriteFestivals,
+        sortedFavoriteFestivals,
         statusFilter
     );
 
@@ -29,6 +37,7 @@ const FavoriteList = () => {
             <div className="empty-favorites">
                 <p>즐겨찾기한 축제가 없습니다.</p>
                 <p>관심 있는 축제를 즐겨찾기에 추가해보세요!</p>
+                <Link to="/" className="explore-btn">축제 둘러보기</Link>
             </div>
         );
     }

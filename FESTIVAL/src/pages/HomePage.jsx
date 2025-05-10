@@ -27,7 +27,7 @@ const HomePage = () => {
     // 검색 핸들러
     const handleSearch = (query) => {
         if (searchType === "school") {
-            updateFilters({ school: query, artist: "" });
+            updateFilters({ school: query, artist: "", region: "" });
             if (query) {
                 displayNotification(
                     "학교 검색",
@@ -36,7 +36,7 @@ const HomePage = () => {
                 );
             }
         } else if (searchType === "artist") {
-            updateFilters({ artist: query, school: "" });
+            updateFilters({ artist: query, school: "", region: "" });
             if (query) {
                 displayNotification(
                     "아티스트 검색",
@@ -45,7 +45,14 @@ const HomePage = () => {
                 );
             }
         } else if (searchType === "region") {
-            // region 필터 구현 예정
+            updateFilters({ region: query, school: "", artist: "" });
+            if (query) {
+                displayNotification(
+                    "지역 검색",
+                    `'${query}'에 대한 검색 결과입니다.`,
+                    "info"
+                );
+            }
         }
     };
 
@@ -58,6 +65,42 @@ const HomePage = () => {
                 `${formatDate(startDate)} ~ ${formatDate(
                     endDate
                 )} 기간의 축제를 필터링합니다.`,
+                "info"
+            );
+        }
+    };
+
+    // 지역 필터 핸들러
+    const handleRegionFilter = (region) => {
+        updateFilters({ region });
+        if (region) {
+            displayNotification(
+                "지역 필터",
+                `'${region}' 지역의 축제를 필터링합니다.`,
+                "info"
+            );
+        }
+    };
+
+    // 학교 필터 핸들러
+    const handleSchoolFilter = (school) => {
+        updateFilters({ school });
+        if (school) {
+            displayNotification(
+                "학교 필터",
+                `'${school}' 학교의 축제를 필터링합니다.`,
+                "info"
+            );
+        }
+    };
+
+    // 아티스트 필터 핸들러
+    const handleArtistFilter = (artist) => {
+        updateFilters({ artist });
+        if (artist) {
+            displayNotification(
+                "아티스트 필터",
+                `'${artist}' 아티스트가 참여하는 축제를 필터링합니다.`,
                 "info"
             );
         }
@@ -115,7 +158,7 @@ const HomePage = () => {
                                     ? "학교명으로 검색 (예: 서울대, 고려대...)"
                                     : searchType === "artist"
                                     ? "아티스트명으로 검색"
-                                    : "지역으로 검색"
+                                    : "지역으로 검색 (예: 서울, 경기...)"
                             }
                         />
                     </div>
@@ -125,9 +168,15 @@ const HomePage = () => {
             <section className="filters-section">
                 <Filter
                     onDateFilter={handleDateFilter}
+                    onSchoolFilter={handleSchoolFilter}
+                    onArtistFilter={handleArtistFilter}
+                    onRegionFilter={handleRegionFilter}
                     onClearFilters={handleClearFilters}
                     startDate={filters.startDate}
                     endDate={filters.endDate}
+                    school={filters.school}
+                    artist={filters.artist}
+                    region={filters.region}
                 />
 
                 <div className="active-filters">
@@ -146,6 +195,16 @@ const HomePage = () => {
                             아티스트: {filters.artist}
                             <button
                                 onClick={() => updateFilters({ artist: "" })}
+                            >
+                                ×
+                            </button>
+                        </div>
+                    )}
+                    {filters.region && (
+                        <div className="filter-tag">
+                            지역: {filters.region}
+                            <button
+                                onClick={() => updateFilters({ region: "" })}
                             >
                                 ×
                             </button>

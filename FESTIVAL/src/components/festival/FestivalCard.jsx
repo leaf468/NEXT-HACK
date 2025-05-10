@@ -5,6 +5,7 @@ import {
     FaRegHeart,
     FaMapMarkerAlt,
     FaCalendarAlt,
+    FaClock,
 } from "react-icons/fa";
 import { UserContext } from "../../contexts/UserContext";
 import { formatDate } from "../../utils/dateUtils";
@@ -25,6 +26,11 @@ const FestivalCard = ({ festival }) => {
         }
     };
 
+    // 대학 이름을 가져오는 함수 (universityName 또는 school 필드 사용)
+    const getUniversityName = () => {
+        return festival.universityName || festival.school || '대학 정보 없음';
+    };
+
     const festivalStatus = getFestivalStatus(
         festival.startDate,
         festival.endDate
@@ -37,14 +43,14 @@ const FestivalCard = ({ festival }) => {
             </div>
 
             <div className="festival-image">
-                {festival.image ? (
+                {festival.imageUrl || festival.image ? (
                     <img
-                        src={festival.image}
-                        alt={`${festival.school} ${festival.name} 포스터`}
+                        src={festival.imageUrl || festival.image}
+                        alt={`${getUniversityName()} ${festival.name} 포스터`}
                     />
                 ) : (
                     <div className="placeholder-image">
-                        <span>{festival.school.charAt(0)}</span>
+                        <span>{getUniversityName().charAt(0)}</span>
                     </div>
                 )}
             </div>
@@ -67,7 +73,7 @@ const FestivalCard = ({ festival }) => {
                     </button>
                 </div>
 
-                <h3 className="festival-school">{festival.school}</h3>
+                <h3 className="festival-school">{getUniversityName()}</h3>
 
                 <div className="festival-details">
                     <div className="festival-detail">
@@ -78,10 +84,19 @@ const FestivalCard = ({ festival }) => {
                         </span>
                     </div>
 
-                    <div className="festival-detail">
-                        <FaMapMarkerAlt className="icon" />
-                        <span>{festival.location.address}</span>
-                    </div>
+                    {festival.time && (
+                        <div className="festival-detail">
+                            <FaClock className="icon" />
+                            <span>{festival.time}</span>
+                        </div>
+                    )}
+
+                    {festival.location && festival.location.address && (
+                        <div className="festival-detail">
+                            <FaMapMarkerAlt className="icon" />
+                            <span>{festival.location.address}</span>
+                        </div>
+                    )}
                 </div>
 
                 {festival.artists && festival.artists.length > 0 && (

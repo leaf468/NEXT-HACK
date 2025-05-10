@@ -14,8 +14,8 @@ import {
   updateProfile
 } from 'firebase/auth';
 
-// API 서버가 없는 경우를 위한 모의 데이터 사용 플래그
-const USE_MOCK_DATA = true;
+// Firebase 데이터를 사용하도록 설정
+const USE_MOCK_DATA = false;
 
 // 사용자 등록
 export const registerUser = async (email, password, displayName) => {

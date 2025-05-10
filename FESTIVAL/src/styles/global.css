@@ -23,6 +23,14 @@
     --spacing-md: 15px;
     --spacing-lg: 20px;
     --spacing-xl: 30px;
+
+    /* Auth form colors */
+    --auth-button-color: #5271ff;
+    --auth-button-hover: #3a5cff;
+
+    /* Primary color variants */
+    --primary-color-light: #7791ff;
+    --primary-color-dark: #3a5cff;
 }
 
 * {
@@ -41,6 +49,10 @@ body {
     width: 100%;
     min-height: 100vh;
 }
+
+/* 글로벌 스타일에 컴포넌트 스타일 추가 */
+@import url('./components/auth.css');
+@import url('./components/favorites.css');
 
 /* Font size responsive adjustments */
 @media (max-width: 576px) {
@@ -144,6 +156,26 @@ button {
 .nav-link:hover,
 .nav-link.active {
     color: var(--primary-color);
+}
+
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logout-button {
+    font-size: 0.85rem;
+    color: #666;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    padding: 3px 8px;
+    transition: all 0.2s;
+}
+
+.logout-button:hover {
+    background-color: #e0e0e0;
+    color: var(--secondary-color);
 }
 
 .notification-button {
@@ -893,6 +925,35 @@ button {
     }
 }
 
+/* 검색 타입 스타일 */
+.search-types {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.search-type-btn {
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-color);
+    background-color: #f0f0f0;
+    border: 1px solid var(--border-color);
+    transition: all 0.2s;
+}
+
+.search-type-btn:hover {
+    background-color: #e0e0e0;
+}
+
+.search-type-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
 /* 반응형 스타일 */
 @media (max-width: 768px) {
     .card-grid {
@@ -916,5 +977,15 @@ button {
     .main-content {
         padding: 15px;
         padding-top: calc(var(--header-height) + 15px);
+    }
+
+    .search-types {
+        flex-wrap: wrap;
+    }
+
+    .search-type-btn {
+        flex: 1;
+        min-width: 100px;
+        text-align: center;
     }
 }

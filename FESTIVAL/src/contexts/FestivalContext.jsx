@@ -4,6 +4,7 @@ import {
     searchFestivalsBySchool,
     searchFestivalsByArtist,
     searchFestivalsByDate,
+    searchFestivalsByRegion,
 } from "../services/festivalService";
 
 export const FestivalContext = createContext();
@@ -18,6 +19,7 @@ export const FestivalProvider = ({ children }) => {
         endDate: null,
         school: "",
         artist: "",
+        region: "",
     });
 
     // 모든 축제 데이터 불러오기
@@ -70,6 +72,14 @@ export const FestivalProvider = ({ children }) => {
                 );
             }
 
+            // 지역 필터
+            if (filters.region) {
+                results = await searchFestivalsByRegion(
+                    filters.region,
+                    results
+                );
+            }
+
             setFilteredFestivals(results);
         } catch (err) {
             setError("검색 중 오류가 발생했습니다.");
@@ -96,6 +106,7 @@ export const FestivalProvider = ({ children }) => {
             endDate: null,
             school: "",
             artist: "",
+            region: "",
         });
         setFilteredFestivals(festivals);
     };
@@ -121,6 +132,14 @@ export const FestivalProvider = ({ children }) => {
         );
     };
 
+    // 특정 지역의 축제 찾기
+    const getFestivalsByRegion = (regionName) => {
+        return festivals.filter((festival) => {
+            const festivalRegion = festival.location?.region || "";
+            return festivalRegion.toLowerCase().includes(regionName.toLowerCase());
+        });
+    };
+
     return (
         <FestivalContext.Provider
             value={{
@@ -134,6 +153,7 @@ export const FestivalProvider = ({ children }) => {
                 getFestivalById,
                 getFestivalsBySchool,
                 getFestivalsByArtist,
+                getFestivalsByRegion,
             }}
         >
             {children}

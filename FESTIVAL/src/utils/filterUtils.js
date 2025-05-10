@@ -6,13 +6,11 @@ export const filterFestivals = (festivals, filters) => {
 
     return festivals.filter((festival) => {
         // 학교 필터
-        if (
-            filters.school &&
-            !festival.school
-                .toLowerCase()
-                .includes(filters.school.toLowerCase())
-        ) {
-            return false;
+        if (filters.school) {
+            const schoolName = festival.universityName || festival.school || '';
+            if (!schoolName.toLowerCase().includes(filters.school.toLowerCase())) {
+                return false;
+            }
         }
 
         // 아티스트 필터
@@ -95,8 +93,8 @@ export const sortFestivals = (festivals, sortBy = "date", order = "asc") => {
 
         case "school":
             sortedFestivals.sort((a, b) => {
-                const schoolA = a.school.toLowerCase();
-                const schoolB = b.school.toLowerCase();
+                const schoolA = (a.universityName || a.school || '').toLowerCase();
+                const schoolB = (b.universityName || b.school || '').toLowerCase();
                 return order === "asc"
                     ? schoolA.localeCompare(schoolB, "ko")
                     : schoolB.localeCompare(schoolA, "ko");
@@ -128,7 +126,7 @@ export const searchFestivals = (festivals, searchTerm) => {
             // 축제 이름
             festival.name.toLowerCase().includes(term) ||
             // 학교 이름
-            festival.school.toLowerCase().includes(term) ||
+            (festival.universityName || festival.school || '').toLowerCase().includes(term) ||
             // 아티스트 이름
             festival.artists.some((artist) =>
                 artist.name.toLowerCase().includes(term)

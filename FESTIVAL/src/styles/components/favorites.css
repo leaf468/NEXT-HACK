@@ -1,0 +1,153 @@
+/* 즐겨찾기 페이지 및 컴포넌트 스타일 */
+.favorites-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.favorites-page h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: var(--primary-color);
+}
+
+.page-description {
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.favorites-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 상태 필터 버튼 */
+.status-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.status-filter-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  background-color: #f0f0f0;
+  color: #666;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.status-filter-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.status-filter-btn.active {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+/* 정렬 컨트롤 */
+.sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.sort-label {
+  font-weight: 500;
+  color: #666;
+}
+
+.sort-select {
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background-color: white;
+}
+
+/* 비어있는 즐겨찾기 상태 */
+.empty-favorites,
+.empty-filtered-favorites {
+  background-color: white;
+  border-radius: 8px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  color: #666;
+}
+
+.empty-favorites p:first-child,
+.empty-filtered-favorites p:first-child {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.empty-favorites p:last-child {
+  margin-bottom: 20px;
+}
+
+.explore-btn {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  margin-top: 15px;
+  transition: background-color 0.2s;
+}
+
+.explore-btn:hover {
+  background-color: var(--primary-color-dark, #3a5cff);
+}
+
+/* 반응형 스타일 */
+@media (max-width: 768px) {
+  .favorites-page h1 {
+    font-size: 1.8rem;
+  }
+  
+  .status-filters {
+    justify-content: center;
+  }
+  
+  .status-filter-btn {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+  }
+  
+  .sort-controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 576px) {
+  .favorites-page {
+    padding: 15px;
+  }
+  
+  .favorites-page h1 {
+    font-size: 1.5rem;
+  }
+  
+  .status-filter-btn {
+    flex: 1;
+    text-align: center;
+    padding: 6px 8px;
+    font-size: 0.85rem;
+  }
+  
+  .empty-favorites,
+  .empty-filtered-favorites {
+    padding: 20px;
+  }
+}
