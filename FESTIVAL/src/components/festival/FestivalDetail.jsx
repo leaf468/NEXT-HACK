@@ -158,10 +158,10 @@ const FestivalDetail = ({ festival }) => {
                 </div>
 
                 <div className="festival-image-container">
-                    {festival.imageUrl || festival.image || (festival.university && festival.university.posterUrl) || (festival.university && festival.university.logo) ? (
+                    {(festival.university && festival.university.poster_url) || festival.imageUrl || festival.image || (festival.university && festival.university.posterUrl) ? (
                         <div className="festival-image-wrapper">
                             <img
-                                src={festival.imageUrl || festival.image || (festival.university && festival.university.posterUrl) || (festival.university && festival.university.logo)}
+                                src={(festival.university && festival.university.poster_url) || festival.imageUrl || festival.image || (festival.university && festival.university.posterUrl)}
                                 alt={`${getUniversityName()} ${getFestivalName()} 포스터`}
                                 className="festival-detail-image"
                             />

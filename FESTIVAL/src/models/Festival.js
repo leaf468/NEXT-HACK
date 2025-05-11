@@ -65,7 +65,7 @@ class Festival {
     }
 
     this.time = data.time || '';
-    this.imageUrl = data.imageUrl || data.image || (data.university && data.university.posterUrl) || '';
+    this.imageUrl = (data.university && data.university.poster_url) || data.imageUrl || data.image || (data.university && data.university.posterUrl) || '';
     this.location = data.location || {
       address: '',
       coordinates: {
