@@ -1,0 +1,40 @@
+/* Festival Detail additional styles */
+.festival-name-container {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.festival-name-badge {
+  position: absolute;
+  top: -10px;
+  right: -30px;
+  background-color: var(--secondary-color);
+  color: white;
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(236, 72, 153, 0.3);
+  transform: rotate(5deg);
+  z-index: 5;
+  display: none; /* Hide the badge */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .festival-name-badge {
+    top: -8px;
+    right: -15px;
+    font-size: 0.65rem;
+    padding: 2px 6px;
+  }
+}
+
+@media (max-width: 576px) {
+  .festival-name-badge {
+    top: -5px;
+    right: -10px;
+    font-size: 0.6rem;
+  }
+}

@@ -54,10 +54,10 @@ export const getAllFestivals = async () => {
     const festivalsRef = collection(db, "festivals");
     const festivalSnapshot = await getDocs(festivalsRef);
     const festivals = [];
-    
+
     for (const festivalDoc of festivalSnapshot.docs) {
       const festivalData = festivalDoc.data();
-      
+
       // Get university data
       let universitySnap = null;
       // Check if university_id exists and is a valid ID or just a name string
@@ -79,7 +79,7 @@ export const getAllFestivals = async () => {
           }
         }
       }
-      
+
       // Get artists data
       const artistsData = [];
       // Check if artist_ids is a string (comma-separated) or array
@@ -109,7 +109,7 @@ export const getAllFestivals = async () => {
           }
         }
       }
-      
+
       // Create university object, with fallback to name string if not found in DB
       let universityObj = null;
       if (universitySnap && universitySnap.exists()) {
@@ -147,10 +147,107 @@ export const getAllFestivals = async () => {
         artists: artistsData
       });
     }
-    
+
     return festivals;
   } catch (error) {
     console.error("Error getting festivals:", error);
+    throw error;
+  }
+};
+
+// Function to fetch university festivals for calendar
+export const getUniversityFestivalsByDate = async (date) => {
+  try {
+    console.log(`Fetching university festivals for date: ${date}`);
+    const searchDate = new Date(date);
+
+    // Validate date format
+    if (isNaN(searchDate.getTime())) {
+      console.error("Invalid date format:", date);
+      return [];
+    }
+
+    // Get all universities with festivals
+    const universitiesRef = collection(db, "universities");
+    const universitySnapshot = await getDocs(universitiesRef);
+
+    // Initialize result array
+    const festivals = [];
+
+    // Process each university
+    for (const universityDoc of universitySnapshot.docs) {
+      const universityData = universityDoc.data();
+
+      // Skip if no festival_name property
+      if (!universityData.festival_name) continue;
+
+      // Check if university has festival date info
+      const startDate = universityData.startDate ?
+        (typeof universityData.startDate.toDate === 'function' ?
+          universityData.startDate.toDate() : new Date(universityData.startDate)) : null;
+
+      const endDate = universityData.endDate ?
+        (typeof universityData.endDate.toDate === 'function' ?
+          universityData.endDate.toDate() : new Date(universityData.endDate)) : null;
+
+      // Set time to beginning/end of day for accurate comparison
+      const startOfDay = startDate ? new Date(startDate.setHours(0, 0, 0, 0)) : null;
+      const endOfDay = endDate ? new Date(endDate.setHours(23, 59, 59, 999)) : null;
+
+      // Start without time for comparison
+      const searchWithoutTime = new Date(searchDate.setHours(0, 0, 0, 0));
+
+      // Check if search date is within festival date range
+      const isInDateRange = startOfDay && endOfDay ?
+        (searchWithoutTime >= startOfDay && searchWithoutTime <= endOfDay) : false;
+
+      console.log(`University ${universityData.name || 'Unknown'} festival date check:`, {
+        festivalName: universityData.festival_name,
+        startDate: startOfDay,
+        endDate: endOfDay,
+        searchDate: searchWithoutTime,
+        isInRange: isInDateRange
+      });
+
+      // If festival is active on the search date or no date is specified
+      if (isInDateRange) {
+        // Get posterUrl if needed
+        let posterUrl = '';
+        if (universityData.poster_path && !universityData.posterUrl) {
+          try {
+            posterUrl = await getImageUrlWithCacheBusting(universityData.poster_path);
+          } catch (error) {
+            console.warn(`Could not fetch poster for university: ${universityData.name || 'Unknown'}`, error);
+          }
+        }
+
+        // Create university object with festival data
+        const universityObj = {
+          id: universityDoc.id,
+          ...universityData,
+          posterUrl: posterUrl || universityData.posterUrl || ''
+        };
+
+        // Create a festival object from university data
+        festivals.push({
+          id: `uni-festival-${universityDoc.id}`,
+          name: universityData.festival_name,
+          startDate: startDate,
+          endDate: endDate,
+          date: date, // For compatibility with existing code
+          university: universityObj,
+          universityName: universityData.name,
+          school: universityData.name,
+          artists: universityData.artists || [],
+          description: universityData.festival_description || ''
+        });
+      }
+    }
+
+    console.log(`Found ${festivals.length} university festivals for date ${date}`);
+    return festivals;
+  } catch (error) {
+    console.error("Error getting university festivals by date:", error);
     throw error;
   }
 };

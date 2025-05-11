@@ -61,6 +61,7 @@ body {
 /* 글로벌 스타일에 컴포넌트 스타일 추가 */
 @import url('./components/auth.css');
 @import url('./components/favorites.css');
+@import url('./components/festivalDetail.css');
 
 /* Font size responsive adjustments */
 @media (max-width: 576px) {
@@ -1135,6 +1136,28 @@ input[type="date"].filter-input {
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.festival-card .festival-name-container {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 5px;
+}
+
+.festival-card .festival-name-badge {
+    position: absolute;
+    top: -8px;
+    right: -20px;
+    background-color: var(--secondary-color);
+    color: white;
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(236, 72, 153, 0.3);
+    transform: rotate(5deg);
+    z-index: 5;
+    display: none; /* Hide the badge */
 }
 
 .festival-school {

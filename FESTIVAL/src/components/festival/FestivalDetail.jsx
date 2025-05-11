@@ -40,9 +40,14 @@ const FestivalDetail = ({ festival }) => {
         );
     };
 
-    // 대학 이름을 가져오는 함수 (universityName 또는 school 필드 사용)
+    // 대학 이름을 가져오는 함수 (university.name, universityName 또는 school 필드 사용)
     const getUniversityName = () => {
-        return festival.universityName || festival.school || '대학 정보 없음';
+        return (festival.university && festival.university.name) || festival.universityName || festival.school || '대학 정보 없음';
+    };
+
+    // 축제 이름을 가져오는 함수 (university.festival_name, festival_name 또는 name 필드 사용)
+    const getFestivalName = () => {
+        return (festival.university && festival.university.festival_name) || festival.festival_name || festival.name || '축제 정보 없음';
     };
 
     const handleFavoriteToggle = () => {
@@ -50,14 +55,14 @@ const FestivalDetail = ({ festival }) => {
             removeFromFavorites(festival.id);
             displayNotification(
                 "즐겨찾기 삭제",
-                `${getUniversityName()} ${festival.festival_name || festival.name}이(가) 즐겨찾기에서 삭제되었습니다.`,
+                `${getUniversityName()} ${getFestivalName()}이(가) 즐겨찾기에서 삭제되었습니다.`,
                 "info"
             );
         } else {
             addToFavorites(festival.id);
             displayNotification(
                 "즐겨찾기 추가",
-                `${getUniversityName()} ${festival.festival_name || festival.name}이(가) 즐겨찾기에 추가되었습니다.`,
+                `${getUniversityName()} ${getFestivalName()}이(가) 즐겨찾기에 추가되었습니다.`,
                 "success"
             );
         }
@@ -67,8 +72,8 @@ const FestivalDetail = ({ festival }) => {
         if (navigator.share) {
             navigator
                 .share({
-                    title: `${getUniversityName()} ${festival.name}`,
-                    text: `${getUniversityName()} ${festival.name} - ${formatDate(
+                    title: `${getUniversityName()} ${getFestivalName()}`,
+                    text: `${getUniversityName()} ${getFestivalName()} - ${formatDate(
                         festival.startDate
                     )}`,
                     url: encodeURI(window.location.href),
@@ -112,7 +117,9 @@ const FestivalDetail = ({ festival }) => {
         <div className="festival-detail-page">
             <div className="festival-detail-header">
                 <div className="festival-title-section">
-                    <h1 className="festival-detail-name">{festival.festival_name || festival.name}</h1>
+                    <div className="festival-name-container">
+                        <h1 className="festival-detail-name">{getFestivalName()}</h1>
+                    </div>
                     <h2 className="festival-detail-school">
                         {getUniversityName()}
                     </h2>
@@ -155,7 +162,7 @@ const FestivalDetail = ({ festival }) => {
                         <div className="festival-image-wrapper">
                             <img
                                 src={festival.imageUrl || festival.image || (festival.university && festival.university.posterUrl) || (festival.university && festival.university.logo)}
-                                alt={`${getUniversityName()} ${festival.festival_name || festival.name} 포스터`}
+                                alt={`${getUniversityName()} ${getFestivalName()} 포스터`}
                                 className="festival-detail-image"
                             />
                         </div>
@@ -171,7 +178,7 @@ const FestivalDetail = ({ festival }) => {
                 <div className="info-item">
                     <h3>
                         <FaCalendarAlt className="icon" />
-                        일시
+                        {getUniversityName()} 행사 일정
                     </h3>
                     <p>
                         {formatDate(festival.startDate)}
@@ -196,7 +203,7 @@ const FestivalDetail = ({ festival }) => {
             <div className="festival-detail-section">
                 <h2 className="section-title">
                     <FaMusic className="icon" />
-                    출연진
+                    {getUniversityName()}의 공연 아티스트
                 </h2>
 
                 {festival.artists && festival.artists.length > 0 ? (
@@ -207,16 +214,18 @@ const FestivalDetail = ({ festival }) => {
                                     {artist.imageUrl || artist.image ? (
                                         <img
                                             src={artist.imageUrl || artist.image}
-                                            alt={artist.name}
+                                            alt={artist.name || "아티스트"}
                                             className="artist-image"
                                         />
                                     ) : (
                                         <div className="artist-placeholder">
-                                            <span>{artist.name.charAt(0)}</span>
+                                            <span>{artist.name && artist.name.trim() !== "" ? artist.name.charAt(0) : "?"}</span>
                                         </div>
                                     )}
                                 </div>
-                                <h3 className="artist-name">{artist.name === "name" ? "미정" : artist.name}</h3>
+                                <h3 className="artist-name">
+                                    {!artist.name || artist.name === "name" || artist.name.trim() === "" ? "미정" : artist.name}
+                                </h3>
                                 {(artist.time || artist.performanceDate) && (
                                     <p className="artist-time">{artist.time || artist.performanceDate}</p>
                                 )}
@@ -230,7 +239,7 @@ const FestivalDetail = ({ festival }) => {
 
             {festival.description && (
                 <div className="festival-detail-section">
-                    <h2 className="section-title">축제 소개</h2>
+                    <h2 className="section-title">{getFestivalName()} 소개</h2>
                     <div className="festival-description">
                         <p>{festival.description}</p>
                     </div>

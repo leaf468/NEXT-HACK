@@ -4,7 +4,7 @@ import { FestivalContext } from "../contexts/FestivalContext";
 import { format, isWithinInterval, parseISO } from "date-fns";
 import "react-calendar/dist/Calendar.css";
 import "../styles/components/calendar.css";
-import { getFestivalsByDate } from "../lib/firebase";
+import { getFestivalsByDate, getUniversityFestivalsByDate } from "../lib/firebase";
 
 function CalendarPage() {
     const { festivals } = useContext(FestivalContext);
@@ -110,13 +110,48 @@ function CalendarPage() {
 
     // 모든 축제 데이터에서 날짜별 이벤트 정보 추출
     useEffect(() => {
+        const loadInitialData = async () => {
+            try {
+                // Load university festivals for initial display
+                if (!selectedDate) {
+                    // Use current date for initial load
+                    const today = new Date();
+                    const dateStr = format(today, "yyyy-MM-dd");
+                    console.log("Loading university festivals for initial display:", dateStr);
+
+                    const universityFestivals = await getUniversityFestivalsByDate(dateStr);
+                    console.log("Loaded university festivals for initial display:", universityFestivals.length);
+
+                    if (universityFestivals && universityFestivals.length > 0) {
+                        // Combine with regular festivals
+                        const combinedFestivals = [...festivals, ...universityFestivals];
+
+                        // Set combined festivals for initial display
+                        setSelectedDateFestivals(prevFestivals => {
+                            // Only update if different
+                            if (prevFestivals.length !== combinedFestivals.length) {
+                                return combinedFestivals;
+                            }
+                            return prevFestivals;
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to load initial university festivals:", error);
+            }
+        };
+
         // 이벤트 정보를 저장할 객체
         const events = {};
 
         console.log("Processing festivals:", festivals);
 
         // festivals가 없거나 비어있으면 처리하지 않음
-        if (!festivals || festivals.length === 0) return;
+        if (!festivals || festivals.length === 0) {
+            // Try to load university festivals instead
+            loadInitialData();
+            return;
+        }
 
         // 초기 로딩 시 선택된 날짜가 없고 festivals가 있을 때만 모든 축제를 보여줌
         if (!selectedDate && festivals.length > 0) {
@@ -127,6 +162,9 @@ function CalendarPage() {
                 }
                 return prevFestivals;
             });
+
+            // Also load university festivals
+            loadInitialData();
         }
 
         festivals.forEach((festival) => {
@@ -179,8 +217,8 @@ function CalendarPage() {
                         festival.artists.length > 0
                     ) {
                         festival.artists.forEach((artist) => {
-                            // 유효한 아티스트 객체인지 확인, "name"인 아티스트는 제외
-                            if (artist && typeof artist === "object" && artist.name !== "name") {
+                            // 유효한 아티스트 객체인지 확인, 빈 문자열이거나 "name"인 아티스트는 제외
+                            if (artist && typeof artist === "object" && artist.name && artist.name !== "name" && artist.name.trim() !== "") {
                                 const artistName = artist.name || "이름 없음";
                                 const existingArtist = events[
                                     dateStr
@@ -190,7 +228,7 @@ function CalendarPage() {
                                     events[dateStr].artists.push({
                                         name: artistName,
                                         festivalId: festival.id,
-                                        festivalName: festival.name || "축제",
+                                        festivalName: festival.festival_name || festival.name || "축제",
                                         schoolName: schoolName,
                                         time: artist.time || "시간 미정",
                                     });
@@ -248,7 +286,7 @@ function CalendarPage() {
                     festival.artists.length > 0
                 ) {
                     festival.artists.forEach((artist) => {
-                        if (artist && typeof artist === "object" && artist.name !== "name") {
+                        if (artist && typeof artist === "object" && artist.name && artist.name !== "name" && artist.name.trim() !== "") {
                             const artistName = artist.name || "이름 없음";
                             const existingArtist = events[dateStr].artists.find(
                                 (a) => a.name === artistName
@@ -258,7 +296,7 @@ function CalendarPage() {
                                 events[dateStr].artists.push({
                                     name: artistName,
                                     festivalId: festival.id,
-                                    festivalName: festival.name || "축제",
+                                    festivalName: festival.festival_name || festival.name || "축제",
                                     schoolName: schoolName,
                                     time: artist.time || "시간 미정",
                                 });
@@ -286,14 +324,30 @@ function CalendarPage() {
 
             // 표준화된 날짜 문자열로 Firebase에서 축제 정보 가져오기
             console.log("Fetching festivals for standardized date:", dateStr);
-            const dateSpecificFestivals = await getFestivalsByDate(dateStr);
+
+            // Fetch from both collections in parallel
+            const [dateSpecificFestivals, universityFestivals] = await Promise.all([
+                getFestivalsByDate(dateStr),
+                getUniversityFestivalsByDate(dateStr)
+            ]);
+
             console.log(
                 "Fetched festivals count:",
-                dateSpecificFestivals.length
+                dateSpecificFestivals.length,
+                "University festivals count:",
+                universityFestivals.length
             );
 
+            let combinedFestivals = [...dateSpecificFestivals];
+
+            // Add university festivals to the combined list
+            if (universityFestivals && universityFestivals.length > 0) {
+                console.log("Adding university festivals to the list:", universityFestivals);
+                combinedFestivals = [...combinedFestivals, ...universityFestivals];
+            }
+
             // Firebase에서 가져온 데이터가 없거나 오류가 있으면 로컬 필터링 사용
-            if (!dateSpecificFestivals || dateSpecificFestivals.length === 0) {
+            if (combinedFestivals.length === 0) {
                 console.log("Firebase 데이터 없음, 로컬 필터링 사용");
 
                 // 메모리에 있는 festivals 데이터를 기반으로 필터링
@@ -307,7 +361,8 @@ function CalendarPage() {
                 setSelectedDateFestivals(filteredFestivals);
             } else {
                 // Firebase에서 받아온 데이터 사용
-                setSelectedDateFestivals(dateSpecificFestivals);
+                console.log("Using combined festivals from Firebase:", combinedFestivals.length);
+                setSelectedDateFestivals(combinedFestivals);
             }
         } catch (error) {
             console.error("날짜별 축제 정보를 가져오는데 실패했습니다:", error);
@@ -362,12 +417,12 @@ function CalendarPage() {
                         return [];
 
                     return festival.artists.map((artist) => {
-                        if (!artist || typeof artist !== "object" || artist.name === "name") return null;
+                        if (!artist || typeof artist !== "object" || !artist.name || artist.name === "name" || artist.name.trim() === "") return null;
 
                         return {
                             name: artist.name || "이름 없음",
                             festivalId: festival.id,
-                            festivalName: festival.name || "축제",
+                            festivalName: festival.festival_name || festival.name || "축제",
                             schoolName:
                                 festival.university?.name ||
                                 festival.universityName ||
@@ -434,12 +489,12 @@ function CalendarPage() {
                     return [];
 
                 return festival.artists.map((artist) => {
-                    if (!artist || typeof artist !== "object" || artist.name === "name") return null;
+                    if (!artist || typeof artist !== "object" || !artist.name || artist.name === "name" || artist.name.trim() === "") return null;
 
                     return {
                         name: artist.name || "이름 없음",
                         festivalId: festival.id,
-                        festivalName: festival.name || "축제",
+                        festivalName: festival.festival_name || festival.name || "축제",
                         schoolName:
                             festival.university?.name ||
                             festival.universityName ||

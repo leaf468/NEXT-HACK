@@ -28,7 +28,12 @@ const FestivalCard = ({ festival }) => {
 
     // 대학 이름을 가져오는 함수 (universityName 또는 school 필드 사용)
     const getUniversityName = () => {
-        return festival.universityName || festival.school || '대학 정보 없음';
+        return festival.universityName || festival.school || festival.university?.name || '대학 정보 없음';
+    };
+
+    // 축제 이름을 가져오는 함수 (university.festival_name, festival_name 또는 name 필드 사용)
+    const getFestivalName = () => {
+        return (festival.university && festival.university.festival_name) || festival.festival_name || festival.name || '축제 정보 없음';
     };
 
     const festivalStatus = getFestivalStatus(
@@ -43,9 +48,9 @@ const FestivalCard = ({ festival }) => {
             </div>
 
             <div className="festival-image">
-                {festival.imageUrl || festival.image || (festival.university && festival.university.posterUrl) || (festival.university && festival.university.logo) ? (
+                {festival.poster_url || festival.imageUrl || festival.image || (festival.university && festival.university.posterUrl) || (festival.university && festival.university.logo) ? (
                     <img
-                        src={festival.imageUrl || festival.image || (festival.university && festival.university.posterUrl) || (festival.university && festival.university.logo)}
+                        src={festival.poster_url || festival.imageUrl || festival.image || (festival.university && festival.university.posterUrl) || (festival.university && festival.university.logo)}
                         alt={`${getUniversityName()} ${festival.festival_name || festival.name} 포스터`}
                     />
                 ) : (
@@ -57,7 +62,9 @@ const FestivalCard = ({ festival }) => {
 
             <div className="festival-content">
                 <div className="festival-header">
-                    <h2 className="festival-name">{festival.festival_name || festival.name}</h2>
+                    <div className="festival-name-container">
+                        <h2 className="festival-name">{getFestivalName()}</h2>
+                    </div>
                     <button
                         className={`favorite-button ${
                             isFavorite(festival.id) ? "active" : ""
