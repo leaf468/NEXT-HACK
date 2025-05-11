@@ -104,9 +104,13 @@ export const searchFestivalsBySchool = async (schoolName, festivals = null) => {
   // 이미 전체 데이터가 있는 경우 로컬에서 필터링
   if (festivals) {
     const filtered = festivals.filter((festival) => {
-      const schoolField = festival.universityName || festival.school || '';
+      // 학교 이름을 다양한 필드에서 검색
+      const schoolField = festival.universityName || festival.school ||
+                         festival.university?.name || '';
       return schoolField.toLowerCase().includes(schoolName.toLowerCase());
     });
+
+    console.log(`학교명 '${schoolName}'로 검색된 축제: ${filtered.length}개`);
     return filtered;
   }
 
@@ -144,6 +148,7 @@ export const searchFestivalsBySchool = async (schoolName, festivals = null) => {
       });
     });
 
+    console.log(`Firestore에서 학교명 '${schoolName}'로 검색된 축제: ${filteredFestivals.length}개`);
     return filteredFestivals;
   } catch (error) {
     console.error("학교별 축제 검색에 실패했습니다:", error);

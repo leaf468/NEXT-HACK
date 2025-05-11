@@ -5,6 +5,7 @@ import SearchBar from "../components/common/SearchBar";
 import ArtistList from "../components/artist/ArtistList";
 import FestivalList from "../components/festival/FestivalList";
 import { getAllArtists } from "../lib/firebase";
+import { getFestivalStatus } from "../utils/dateUtils";
 
 const ArtistSearchPage = () => {
     const { updateFilters, clearFilters, filteredFestivals, festivals, loading, error } =
@@ -127,7 +128,10 @@ const ArtistSearchPage = () => {
     // 아티스트 선택 핸들러
     const handleArtistSelect = (artistName) => {
         setSelectedArtist(artistName);
-        updateFilters({ artist: artistName, school: "" });
+
+        // 필터 초기화 후 아티스트 필터만 설정 (검색 충돌 방지)
+        clearFilters(); // 기존 필터 모두 초기화
+        updateFilters({ artist: artistName }); // 아티스트 필터만 설정
 
         displayNotification(
             "아티스트 선택",

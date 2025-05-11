@@ -74,57 +74,71 @@ export const FestivalProvider = ({ children }) => {
             let results = [...festivals];
             console.log("Applying filters:", filters);
 
-            // 필터 순서 변경: 날짜 필터를 맨 마지막에 적용하도록 변경
+            // 필터 적용 최적화: 최소 결과가 나오는 필터부터 적용
 
-            // 학교 필터 적용
-            if (filters.school) {
-                results = await searchFestivalsBySchool(filters.school, results);
-                console.log("After school filter:", results.length);
-            }
+            // 아티스트 필터와 학교 필터가 모두 있는 경우 특별 처리
+            if (filters.artist && filters.school) {
+                console.log("아티스트와 학교 필터 모두 적용 중:", filters.artist, filters.school);
 
-            // 아티스트 필터 적용
-            if (filters.artist) {
-                results = await searchFestivalsByArtist(filters.artist, results);
-                console.log("After artist filter:", results.length);
+                // 먼저 아티스트로 필터링
+                const artistFiltered = await searchFestivalsByArtist(filters.artist, results);
+                // 그 다음 학교로 필터링
+                results = await searchFestivalsBySchool(filters.school, artistFiltered);
+
+                console.log("아티스트와 학교 필터 적용 후:", results.length);
+            } else {
+                // 단일 필터 적용
+
+                // 학교 필터 적용
+                if (filters.school) {
+                    results = await searchFestivalsBySchool(filters.school, results);
+                    console.log("학교 필터 적용 후:", results.length);
+                }
+
+                // 아티스트 필터 적용
+                if (filters.artist) {
+                    results = await searchFestivalsByArtist(filters.artist, results);
+                    console.log("아티스트 필터 적용 후:", results.length);
+                }
             }
 
             // 지역 필터 적용
             if (filters.region) {
                 results = await searchFestivalsByRegion(filters.region, results);
-                console.log("After region filter:", results.length);
+                console.log("지역 필터 적용 후:", results.length);
             }
 
             // 날짜 필터를 마지막에 적용
             if (filters.date && (filters.date.startDate || filters.date.endDate)) {
-                console.log("Applying date filter:", filters.date);
+                console.log("날짜 필터 적용 중:", filters.date);
 
                 // 날짜 필터링 전에 유효성 검사 및 로깅
                 if (typeof filters.date === 'string') {
-                    console.log("Date filter is string:", filters.date);
+                    console.log("문자열 형식 날짜 필터:", filters.date);
                 } else if (typeof filters.date === 'object') {
                     if (filters.date.startDate) {
-                        console.log("Start date:", filters.date.startDate);
+                        console.log("시작일:", filters.date.startDate);
                         // 한국어 날짜 확인 가능
                         if (filters.date.startDate.includes('년')) {
-                            console.log("Korean date format detected in startDate");
+                            console.log("시작일에 한국어 날짜 형식 감지됨");
                         }
                     }
                     if (filters.date.endDate) {
-                        console.log("End date:", filters.date.endDate);
+                        console.log("종료일:", filters.date.endDate);
                         // 한국어 날짜 확인 가능
                         if (filters.date.endDate.includes('년')) {
-                            console.log("Korean date format detected in endDate");
+                            console.log("종료일에 한국어 날짜 형식 감지됨");
                         }
                     }
                 }
 
                 results = await searchFestivalsByDate(filters.date, results);
-                console.log("After date filter:", results.length);
+                console.log("날짜 필터 적용 후:", results.length);
             }
 
             // 축제 상태(진행 중/종료) 필터 적용
             results = filterFestivalsByStatus(results, filters.showOnlyActive);
-            console.log("After status filter (showOnlyActive:", filters.showOnlyActive, "):", results.length);
+            console.log("상태 필터 적용 후 (showOnlyActive:", filters.showOnlyActive, "):", results.length);
 
             // 축제 데이터에 상태와 D-day 정보 추가
             results = processFestivalData(results);
