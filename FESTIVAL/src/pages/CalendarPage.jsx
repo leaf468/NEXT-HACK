@@ -15,6 +15,11 @@ function CalendarPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedDate, setSelectedDate] = useState(null);
 
+    // 축제 이름을 가져오는 함수 (university.festival_name, festival_name 또는 name 필드 사용)
+    const getFestivalName = (festival) => {
+        return (festival.university && festival.university.festival_name) || festival.festival_name || festival.name || '축제 정보 없음';
+    };
+
     // 날짜 객체 표준화 함수
     const normalizeDateObject = (dateValue) => {
         if (!dateValue) return null;
@@ -75,7 +80,7 @@ function CalendarPage() {
                 });
             } catch (error) {
                 console.error("날짜 비교 중 오류:", error, {
-                    festivalName: festival.name,
+                    festivalName: getFestivalName(festival),
                     startDate,
                     endDate,
                     targetDate,
@@ -172,7 +177,7 @@ function CalendarPage() {
             const endDate = normalizeDateObject(festival.endDate);
 
             // 날짜 로깅
-            console.log(`Festival ${festival.name} parsed dates:`, {
+            console.log(`Festival ${getFestivalName(festival)} parsed dates:`, {
                 startDate,
                 endDate,
                 isStartDateValid: isValidDate(startDate),
@@ -228,7 +233,7 @@ function CalendarPage() {
                                     events[dateStr].artists.push({
                                         name: artistName,
                                         festivalId: festival.id,
-                                        festivalName: festival.festival_name || festival.name || "축제",
+                                        festivalName: getFestivalName(festival),
                                         schoolName: schoolName,
                                         time: artist.time || "시간 미정",
                                     });
@@ -296,7 +301,7 @@ function CalendarPage() {
                                 events[dateStr].artists.push({
                                     name: artistName,
                                     festivalId: festival.id,
-                                    festivalName: festival.festival_name || festival.name || "축제",
+                                    festivalName: getFestivalName(festival),
                                     schoolName: schoolName,
                                     time: artist.time || "시간 미정",
                                 });
@@ -353,7 +358,7 @@ function CalendarPage() {
                 // 메모리에 있는 festivals 데이터를 기반으로 필터링
                 const filteredFestivals = festivals.filter((festival) => {
                     const isActive = isFestivalActiveOnDate(festival, date);
-                    console.log(`Festival ${festival.name || 'Unknown'} active on ${dateStr}: ${isActive}`);
+                    console.log(`Festival ${getFestivalName(festival)} active on ${dateStr}: ${isActive}`);
                     return isActive;
                 });
 
@@ -371,7 +376,7 @@ function CalendarPage() {
             console.log("오류로 인해 로컬 필터링 사용");
             const filteredFestivals = festivals.filter((festival) => {
                 const isActive = isFestivalActiveOnDate(festival, date);
-                console.log(`Festival ${festival.name || 'Unknown'} active on ${dateStr}: ${isActive}`);
+                console.log(`Festival ${getFestivalName(festival)} active on ${dateStr}: ${isActive}`);
                 return isActive;
             });
 
@@ -422,7 +427,7 @@ function CalendarPage() {
                         return {
                             name: artist.name || "이름 없음",
                             festivalId: festival.id,
-                            festivalName: festival.festival_name || festival.name || "축제",
+                            festivalName: getFestivalName(festival),
                             schoolName:
                                 festival.university?.name ||
                                 festival.universityName ||
@@ -494,7 +499,7 @@ function CalendarPage() {
                     return {
                         name: artist.name || "이름 없음",
                         festivalId: festival.id,
-                        festivalName: festival.festival_name || festival.name || "축제",
+                        festivalName: getFestivalName(festival),
                         schoolName:
                             festival.university?.name ||
                             festival.universityName ||
