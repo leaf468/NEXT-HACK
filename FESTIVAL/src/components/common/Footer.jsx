@@ -49,17 +49,16 @@ const Footer = () => {
                 <div className="footer-section">
                     <h3 className="footer-title">문의</h3>
                     <p className="footer-contact">
-                        이메일: info@campusfestival.kr
+                        인스타그램: @next_koreauniv
                         <br />
-                        전화: 02-123-4567
                     </p>
                 </div>
             </div>
 
             <div className="footer-bottom">
                 <p>
-                    &copy; {new Date().getFullYear()} FIESTA. All
-                    rights reserved.
+                    &copy; {new Date().getFullYear()} FIESTA. All rights
+                    reserved.
                 </p>
             </div>
         </footer>
